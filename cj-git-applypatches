@@ -1,0 +1,96 @@
+#!/usr/bin/perl -w
+
+# Thu Nov 26 22:53:32 EST 2009
+(my $email='christian-novo%jaeger,mine,nu')=~ tr/%,/@./;
+
+use strict;
+
+$0=~ /(.*?)([^\/]+)\z/s or die "?";
+my ($mydir, $myname)=($1,$2);
+sub usage {
+    print STDERR map{"$_\n"} @_ if @_;
+    print "$myname listfile
+
+  Apply the patches in the listfile to the current git dir; assumes
+  the patches are in the same dir as listfile.
+
+  Like with rebase -i, prefixing patches with 's' is possible. The
+  ordering is as in the file.
+
+  (Christian Jaeger <$email>)
+";
+exit (@_ ? 1 : 0);
+}
+
+use Getopt::Long;
+our $verbose=0;
+GetOptions("verbose"=> \$verbose,
+	   "help"=> sub{usage},
+	   ) or exit 1;
+usage unless @ARGV==1;
+
+our ($listfile)=@ARGV;
+
+
+{
+    package Cluster;
+    use Class::Array -fields=> -publica=>
+      (
+       'message', # string
+       #'lead', # path
+       #'squashes', # @ of additional patches.
+       #ehr. no need for distinction right.
+       'patches', # paths
+      );
+    sub set_message {
+	my $s=shift;
+	@_==1 or die;
+	my ($path)=@_;
+	die "message already set" if $$s[Message];
+	use Chj::xopen 'xopen_read';
+	my $f=xopen_read $path;
+	$$s[Message]= $f->xcontent;
+	$f->xclose;
+    }
+    sub add_patch {
+	my $s=shift;
+	push @{$$s[Patches]},@_
+    }
+    end Class::Array;
+}
+
+#use Chj::xperlfunc;
+use Chj::xopen 'xopen_read';
+
+our $listfh= xopen_read $listfile;
+
+our @clusters;
+our $curcluster= new Cluster;
+while (<$listfh>) {
+    chomp;
+    next if /^\s*$/;
+    next if /^\s*#/;
+    if (/^s +(\d+-.+)/) {
+	my $path=$1;
+	# a squash. extend existing cluster.
+	$curcluster->add_patch($path);
+    } elsif (/^(\d+-.+)/) {
+	my $path=$1;
+	# a new cluster.
+	push @clusters, $curcluster;
+	$curcluster= new Cluster;
+	$curcluster->add_patch($path);
+    } elsif (/^(\d+)$/) {
+	my $path=$1;
+	# a message file
+	$curcluster->set_message ($path);
+    } else {
+	die "no match for '$_'";
+    }
+}
+$listfh->xclose;
+
+
+
+#use Chj::ruse;
+use Chj::Backtrace; use Chj::repl; repl;
