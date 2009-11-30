@@ -52,6 +52,7 @@ our ($listfile)=@ARGV;
     package Cluster;
     use Class::Array -fields=> -publica=>
       (
+       'line', #of the start, in source file.
        'message', # string
        #'lead', # path
        #'squashes', # @ of additional patches.
@@ -60,7 +61,9 @@ our ($listfile)=@ARGV;
       );
     sub new {
 	my $cl=shift;
+	my ($line)=@_;
 	my $s=$cl->SUPER::new;
+	$$s[Line]=$line;
 	$$s[Patches]=[]; #to avoid "Can't use an undefined value as an ARRAY reference" in is_empty, wow old horridity
 	$s
     }
@@ -96,7 +99,7 @@ our ($listfile)=@ARGV;
 		
 	    } else {
 		$$s[Message]
-		  or die "neither patch leader nor explicit message given";# for ..?. line no etc..
+		  or die "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
 	    }
 	} elsif (@leader==1) {
 	    die "message set both from patch leader and explicitely" if $$s[Message];
@@ -114,9 +117,11 @@ use Chj::xopen 'xopen_read';
 our $listfh= xopen_read $listfile;
 
 our @clusters;
-our $curcluster= new Cluster;
+my $line=1;
+our $curcluster= new Cluster ($line);
 while (<$listfh>) {
     chomp;
+    $line++;
     next if /^\s*#/;
     if (/^(\*?)(\d+-.+)/) {
 	my ($is_leader,$path)=($1,$2);
@@ -125,7 +130,7 @@ while (<$listfh>) {
     } elsif (/^\s*$/) {
 	# a new cluster.
 	push @clusters, $curcluster unless $curcluster->is_empty;
-	$curcluster= new Cluster;
+	$curcluster= new Cluster ($line);
     } elsif (/^(\d+)$/) {
 	my $path=$1;
 	# a message file
