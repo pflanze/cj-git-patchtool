@@ -46,7 +46,7 @@ our ($listfile)=@ARGV;
     package Patch;
     use Class::Array -fields=> -publica=>
       (
-       'path',
+       'filename',
        'is_leader', # giving the message.
        'commitid', # set-once.
       );
@@ -69,13 +69,13 @@ our ($listfile)=@ARGV;
 	if ($$s[Commitid]) {
 	    ("-C",$$s[Commitid]) # to be added to git commit for the cluster
 	} else {
-	    _Error->new("missing commitid for patchfile $$s[Path]")
+	    _Error->new("missing commitid for patchfile $$s[Filename]")
 	}
     }
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
-	Chj::Git::Functions::xgit_do "am", $$s[Path];
+	Chj::Git::Functions::xgit_do "am", $$s[Filename];
 	# ^ does not output the new commitid in a clear way, thus:
 	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	$s->set_commitid ($commitid);
