@@ -180,7 +180,7 @@ our ($listfile)=@ARGV;
 	# now sort it? or  anyway  jus us sort dumbi
 	(sort {
 	    $$a[0] cmp $$b[0]
-	} @p)[0][1]
+	} @p)[-1][1]
     }
     sub message {
 	my $s=shift;
