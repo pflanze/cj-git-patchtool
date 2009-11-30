@@ -82,6 +82,29 @@ our ($listfile)=@ARGV;
 	my $s=shift;
 	not @{$$s[Patches]}
     }
+    sub message {
+	my $s=shift;
+	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
+	my @leader;
+	for (@{$s->patches}) {
+	    if ($_->is_leader) {
+		push @leader,$_
+	    }
+	}#wow why didn't i use filter ehr  ah heh. wl map.
+	if (@leader==0) {
+	    if (@{$$s[Patches]}==1) {
+		
+	    } else {
+		$$s[Message]
+		  or die "neither patch leader nor explicit message given";# for ..?. line no etc..
+	    }
+	} elsif (@leader==1) {
+	    die "message set both from patch leader and explicitely" if $$s[Message];
+	    $leader[0]->message
+	} else {
+	    die "more than one leader patches (for message selection) selected";
+	}
+    }
     end Class::Array;
 }
 
