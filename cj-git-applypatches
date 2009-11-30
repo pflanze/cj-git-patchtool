@@ -90,6 +90,27 @@ our ($listfile)=@ARGV;
 	    _MissingCommitidError->new("missing commitid for patchfile $$s[Filename]")
 	}
     }
+    sub author_date {
+	my $s=shift;
+	#---
+	use Chj::xopen ();
+	my $f= Chj::xopen::xopen_read $s->path;
+	my $headers={};
+	while (<$f>) {
+	    chomp;
+	    last if /^$/;
+	    next if /^From /;
+	    if (my ($key,$val)= /^([\w-]+):\s*(.*)/) {
+		push @{$$headers{lc $key}},$val;
+	    } else {
+		die "invalid header in file: '$_' ".$s->path;
+	    }
+	}
+	$f->xclose;
+	#---
+	@{$$headers{date}||[]}==1 or die "doesn't contain exactly one 'date' header: ".$s->path;
+	$$headers{date}[0]
+    }
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
@@ -142,6 +163,24 @@ our ($listfile)=@ARGV;
     sub is_singlepatch {
 	my $s=shift;
 	@{$$s[Patches]}==1
+    }
+    use Date::Parse ();
+    sub author_date {
+	my $s=shift;
+	die "empty" if $s->is_empty;
+	# select the *latest* author_date of all patches.
+	my @p= map {
+	    [
+	     ((scalar Date::Parse::str2time($_))||die "invalid time?: '$_'"),
+	     $_
+	    ]
+	} map {
+	    $_->author_date
+	} @{$s->patches};
+	# now sort it? or  anyway  jus us sort dumbi
+	(sort {
+	    $$a[0] cmp $$b[0]
+	} @p)[0][1]
     }
     sub message {
 	my $s=shift;
@@ -257,6 +296,7 @@ sub apply {
 	    &$applypatches;
 	    Chj::Git::Functions::xgit_do "reset", "--soft", $oldhead;
 	    my @msgoptions= $c->message;
+	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
 	    Chj::Git::Functions::xgit_do "commit", @msgoptions;
 	}
     }
