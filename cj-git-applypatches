@@ -113,6 +113,10 @@ our ($listfile)=@ARGV;
 	my $s=shift;
 	not @{$$s[Patches]}
     }
+    sub is_singlepatch {
+	my $s=shift;
+	@{$$s[Patches]}==1
+    }
     sub message {
 	my $s=shift;
 	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
@@ -123,7 +127,7 @@ our ($listfile)=@ARGV;
 	    }
 	}#wow why didn't i use filter ehr  ah heh. wl map.
 	if (@leader==0) {
-	    if (@{$$s[Patches]}==1) {
+	    if ($s->is_singlepatch) {
 		$$s[Patches][0]->message
 	    } else {
 		if ($$s[Message]) {
@@ -173,6 +177,24 @@ while (<$listfh>) {
 push @clusters, $curcluster unless $curcluster->is_empty;
 $listfh->xclose;
 
+sub apply {
+    for my $c (@clusters) {
+	my $applypatches=sub {
+	    for my $p (@{$c->patches}) {
+		$p->apply
+	    }
+	};
+	if ($c->is_singlepatch) {
+	    &$applypatches
+	} else {
+	    my $oldhead= xgit_rev_parse "HEAD";
+	    &$applypatches;
+	    xgit_do "reset", $oldhead;
+	    my @msgoptions= $c->message;
+	    xgit_do "commit", @msgoptions;
+	}
+    }
+}
 
 
 #use Chj::ruse;
