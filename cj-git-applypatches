@@ -59,6 +59,7 @@ our ($listfile)=@ARGV;
     package Patch;
     use Class::Array -fields=> -publica=>
       (
+       'basedir',
        'filename',
        'is_leader', # giving the message.
        'commitid', # set-once.
@@ -67,6 +68,10 @@ our ($listfile)=@ARGV;
     sub new {
 	my $cl=shift;
 	bless [@_],$cl
+    }
+    sub path {
+	my $s=shift;
+	"$$s[Basedir]/$$s[Filename]"
     }
     #so wie bei  schm  missing das manual jus override von accessoren  ?..  wl  ~.
     sub set_commitid {
@@ -88,8 +93,7 @@ our ($listfile)=@ARGV;
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
-	my ($basedir)=@_;
-	Chj::Git::Functions::xgit_do "am", "$basedir/$$s[Filename]";
+	Chj::Git::Functions::xgit_do "am", $s->path;
 	# ^ does not output the new commitid in a clear way, thus:
 	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	$s->set_commitid ($commitid);
@@ -168,6 +172,9 @@ our ($listfile)=@ARGV;
     end Class::Array;
 }
 
+use Chj::xperlfunc 'dirname';
+our $basedir= dirname $listfile;
+
 use Chj::xopen 'xopen_read';
 
 our $listfh= xopen_read $listfile;
@@ -182,7 +189,7 @@ while (<$listfh>) {
     if (/^(\*?)(\d+-.+)/) {
 	my ($is_leader,$path)=($1,$2);
 	# a squash. extend existing cluster.
-	$curcluster->add_patch(Patch->new($path,$is_leader));
+	$curcluster->add_patch(Patch->new($basedir,$path,$is_leader));
     } elsif (/^\s*$/) {
 	# a new cluster.
 	push @clusters, $curcluster unless $curcluster->is_empty;
@@ -213,9 +220,6 @@ while (<$listfh>) {
 push @clusters, $curcluster unless $curcluster->is_empty;
 $listfh->xclose;
 
-use Chj::xperlfunc 'dirname';
-our $basedir= dirname $listfile;
-
 sub check {
     my $errs=0;
     for my $c (@clusters) {
@@ -243,7 +247,7 @@ sub apply {
     for my $c (@clusters) {
 	my $applypatches=sub {
 	    for my $p (@{$c->patches}) {
-		$p->apply($basedir);
+		$p->apply;
 	    }
 	};
 	if ($c->is_singlepatch) {
