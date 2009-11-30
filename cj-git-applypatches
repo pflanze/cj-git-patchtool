@@ -190,7 +190,22 @@ while (<$listfh>) {
     } elsif (/^(\d+)$/) {
 	my $path=$1;
 	# a message file
+	warn "actually untested";
 	$curcluster->set_message_from_path ($path);
+    } elsif (/^\[\s*$/) {
+	my @c;
+	while (<$listfh>) {
+	    chomp;
+	    $line++;#!
+	    if (/^\]\s*(?:#.*)?$/) {
+		last;
+	    }
+	    if (/^#/) {
+		die "comments inside comment declarations not allowed: '$_'";
+	    }
+	    push @c, $_
+	}
+	$curcluster->set_message(join ("\n", map { my $s=$_; $s=~ s/\s+\z//; $s } @c));
     } else {
 	die "no match for '$_'";
     }
