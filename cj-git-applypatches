@@ -126,8 +126,11 @@ our ($listfile)=@ARGV;
 	    if (@{$$s[Patches]}==1) {
 		$$s[Patches][0]->message
 	    } else {
-		$$s[Message]
-		  or new _Error "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
+		if ($$s[Message]) {
+		    ("-m", $$s[Message])
+		} else {
+		    new _Error "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
+		}
 	    }
 	} elsif (@leader==1) {
 	    die "message set both from patch leader and explicitely" if $$s[Message];
