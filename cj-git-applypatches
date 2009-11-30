@@ -24,8 +24,10 @@ exit (@_ ? 1 : 0);
 
 use Getopt::Long;
 our $verbose=0;
+our $opt_dry;
 GetOptions("verbose"=> \$verbose,
 	   "help"=> sub{usage},
+	   "dry-run"=> \$opt_dry,
 	   ) or exit 1;
 usage unless @ARGV==1;
 
@@ -242,5 +244,19 @@ sub apply {
 }
 
 
+my $errors= check;
+#my or our"?".
+#f
+
+if ($errors) {
+    print "$errors errors in input file, stopping.\n";
+    exit 1;
+} else {
+    if ($opt_dry) {
+	print "no errors in input file; not running because in dry-run mode.\n";
+    } else {
+	apply
+    }
+}
 #use Chj::ruse;
-use Chj::Backtrace; use Chj::repl; repl;
+#use Chj::Backtrace; use Chj::repl; repl;
