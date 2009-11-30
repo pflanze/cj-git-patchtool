@@ -31,6 +31,22 @@ usage unless @ARGV==1;
 
 our ($listfile)=@ARGV;
 
+{
+    package Patch;
+    use Class::Array -fields=> -publica=>
+      (
+       'path',
+       'is_leader', # giving the message.
+      );
+    #as alwaysstillmissingthenewgell.
+    sub new {
+	my $cl=shift;
+	bless [@_],$cl
+    }
+    #so wie bei  schm  missing das manual jus override von accessoren  ?..  wl  ~.
+    end Class::Array;
+}
+
 
 {
     package Cluster;
@@ -42,7 +58,13 @@ our ($listfile)=@ARGV;
        #ehr. no need for distinction right.
        'patches', # paths
       );
-    sub set_message {
+    sub new {
+	my $cl=shift;
+	my $s=$cl->SUPER::new;
+	$$s[Patches]=[]; #to avoid "Can't use an undefined value as an ARRAY reference" in is_empty, wow old horridity
+	$s
+    }
+    sub set_message_from_path {
 	my $s=shift;
 	@_==1 or die;
 	my ($path)=@_;
@@ -56,6 +78,10 @@ our ($listfile)=@ARGV;
 	my $s=shift;
 	push @{$$s[Patches]},@_
     }
+    sub is_empty {
+	my $s=shift;
+	not @{$$s[Patches]}
+    }
     end Class::Array;
 }
 
@@ -68,26 +94,24 @@ our @clusters;
 our $curcluster= new Cluster;
 while (<$listfh>) {
     chomp;
-    next if /^\s*$/;
     next if /^\s*#/;
-    if (/^s +(\d+-.+)/) {
-	my $path=$1;
+    if (/^(\*?)(\d+-.+)/) {
+	my ($is_leader,$path)=($1,$2);
 	# a squash. extend existing cluster.
-	$curcluster->add_patch($path);
-    } elsif (/^(\d+-.+)/) {
-	my $path=$1;
+	$curcluster->add_patch(Patch->new($path,$is_leader));
+    } elsif (/^\s*$/) {
 	# a new cluster.
-	push @clusters, $curcluster;
+	push @clusters, $curcluster unless $curcluster->is_empty;
 	$curcluster= new Cluster;
-	$curcluster->add_patch($path);
     } elsif (/^(\d+)$/) {
 	my $path=$1;
 	# a message file
-	$curcluster->set_message ($path);
+	$curcluster->set_message_from_path ($path);
     } else {
 	die "no match for '$_'";
     }
 }
+push @clusters, $curcluster unless $curcluster->is_empty;
 $listfh->xclose;
 
 
