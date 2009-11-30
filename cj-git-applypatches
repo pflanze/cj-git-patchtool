@@ -55,6 +55,12 @@ our ($listfile)=@ARGV;
 	bless [@_],$cl
     }
     #so wie bei  schm  missing das manual jus override von accessoren  ?..  wl  ~.
+    sub message {
+	my $s=shift;
+	# hm. von patch file hm. extrahieren doch doof?  hm. eben formulieren dings, anweisung, wie das von git dann -c so nimmt gell  hm  muss id kennen hmmmm.
+	# AH  aus file die commitid extrahieren ichdep gell?wollteich. jaklar geht eh nid per neuer commidid weil die eben message nid hat--ehr zwar dochschon.und actually jene von file. hm back, doch wie geplant.
+	"TODO EXTRACT MESSAGE (from patchfile $$s[Path])"
+    }
     end Class::Array;
 }
 
