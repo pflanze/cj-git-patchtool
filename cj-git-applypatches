@@ -48,6 +48,7 @@ our ($listfile)=@ARGV;
       (
        'path',
        'is_leader', # giving the message.
+       'commitid', # set-once.
       );
     #as alwaysstillmissingthenewgell.
     sub new {
@@ -55,11 +56,21 @@ our ($listfile)=@ARGV;
 	bless [@_],$cl
     }
     #so wie bei  schm  missing das manual jus override von accessoren  ?..  wl  ~.
+    sub set_commitid {
+	my $s=shift;
+	my ($commitid)=@_;
+	die "commitid already set" if $$s[Commitid];
+	$$s[Commitid]=$commitid
+    }
     sub message {
 	my $s=shift;
 	# hm. von patch file hm. extrahieren doch doof?  hm. eben formulieren dings, anweisung, wie das von git dann -c so nimmt gell  hm  muss id kennen hmmmm.
 	# AH  aus file die commitid extrahieren ichdep gell?wollteich. jaklar geht eh nid per neuer commidid weil die eben message nid hat--ehr zwar dochschon.und actually jene von file. hm back, doch wie geplant.
-	"TODO EXTRACT MESSAGE (from patchfile $$s[Path])"
+	if ($$s[Commitid]) {
+	    ("-C",$$s[Commitid]) # to be added to git commit for the cluster
+	} else {
+	    _Error->new("missing commitid for patchfile $$s[Path]")
+	}
     }
     end Class::Array;
 }
