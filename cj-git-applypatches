@@ -39,8 +39,19 @@ our ($listfile)=@ARGV;
 	my ($msg)=@_;
 	bless \$msg, $cl
     }
+    sub string {
+	my $s=shift;
+	$$s
+    }
 }
-
+{
+    package _NoCommitmsgError;
+    our @ISA=("_Error");
+}
+{
+    package _MissingCommitidError;
+    our @ISA=("_Error");
+}
 
 {
     package Patch;
@@ -69,7 +80,7 @@ our ($listfile)=@ARGV;
 	if ($$s[Commitid]) {
 	    ("-C",$$s[Commitid]) # to be added to git commit for the cluster
 	} else {
-	    _Error->new("missing commitid for patchfile $$s[Filename]")
+	    _MissingCommitidError->new("missing commitid for patchfile $$s[Filename]")
 	}
     }
     use Chj::Git::Functions;
@@ -142,7 +153,7 @@ our ($listfile)=@ARGV;
 		if ($$s[Message]) {
 		    ("-m", $$s[Message])
 		} else {
-		    new _Error "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
+		    new _NoCommitmsgError "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
 		}
 	    }
 	} elsif (@leader==1) {
@@ -187,6 +198,29 @@ $listfh->xclose;
 
 use Chj::xperlfunc 'dirname';
 our $basedir= dirname $listfile;
+
+sub check {
+    my $errs=0;
+    for my $c (@clusters) {
+	#ugly copy stuf. from apply.
+	for my $p (@{$c->patches}) {
+	    #$p->apply($basedir);
+	    #now we calculate paths anyway ourselves?? ~td:
+	    my $path= $basedir."/".$p->filename;
+	    -e $path or do {
+		warn "patch file '$path' missing\n";
+		$errs++;
+	    };
+	}
+	my @m= $c->message;
+	#if (my @e= grep { UNIVERSAL::isa($_,"_Error") } @m) {
+	print $_->string,"\n"
+	  for (grep { if (UNIVERSAL::isa($_,"_MissingCommitidError")) { 0 } else { $errs++; 1 } }
+	       grep { UNIVERSAL::isa($_,"_Error") } @m);
+    }
+    $errs
+}
+
 use Chj::Git::Functions;
 sub apply {
     for my $c (@clusters) {
