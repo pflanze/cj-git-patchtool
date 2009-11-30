@@ -72,6 +72,14 @@ our ($listfile)=@ARGV;
 	    _Error->new("missing commitid for patchfile $$s[Path]")
 	}
     }
+    use Chj::Git::Functions;
+    sub apply {
+	my $s=shift;
+	Chj::Git::Functions::xgit_do "am", $$s[Path];
+	# ^ does not output the new commitid in a clear way, thus:
+	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
+	$s->set_commitid ($commitid);
+    }
     end Class::Array;
 }
 
@@ -177,6 +185,7 @@ while (<$listfh>) {
 push @clusters, $curcluster unless $curcluster->is_empty;
 $listfh->xclose;
 
+use Chj::Git::Functions;
 sub apply {
     for my $c (@clusters) {
 	my $applypatches=sub {
@@ -187,11 +196,11 @@ sub apply {
 	if ($c->is_singlepatch) {
 	    &$applypatches
 	} else {
-	    my $oldhead= xgit_rev_parse "HEAD";
+	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
-	    xgit_do "reset", $oldhead;
+	    Chj::Git::Functions::xgit_do "reset", "--soft", $oldhead;
 	    my @msgoptions= $c->message;
-	    xgit_do "commit", @msgoptions;
+	    Chj::Git::Functions::xgit_do "commit", @msgoptions;
 	}
     }
 }
