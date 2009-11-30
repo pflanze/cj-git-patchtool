@@ -75,7 +75,8 @@ our ($listfile)=@ARGV;
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
-	Chj::Git::Functions::xgit_do "am", $$s[Filename];
+	my ($basedir)=@_;
+	Chj::Git::Functions::xgit_do "am", "$basedir/$$s[Filename]";
 	# ^ does not output the new commitid in a clear way, thus:
 	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	$s->set_commitid ($commitid);
@@ -154,7 +155,6 @@ our ($listfile)=@ARGV;
     end Class::Array;
 }
 
-#use Chj::xperlfunc;
 use Chj::xopen 'xopen_read';
 
 our $listfh= xopen_read $listfile;
@@ -185,12 +185,14 @@ while (<$listfh>) {
 push @clusters, $curcluster unless $curcluster->is_empty;
 $listfh->xclose;
 
+use Chj::xperlfunc 'dirname';
+our $basedir= dirname $listfile;
 use Chj::Git::Functions;
 sub apply {
     for my $c (@clusters) {
 	my $applypatches=sub {
 	    for my $p (@{$c->patches}) {
-		$p->apply
+		$p->apply($basedir);
 	    }
 	};
 	if ($c->is_singlepatch) {
