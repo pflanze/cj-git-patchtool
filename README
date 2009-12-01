@@ -1,0 +1,10 @@
+
+mkdir PATCHES
+cd PATCHES
+git format-patch --thread -M -C <start..end>
+ls *.patch > _list
+# git init
+# git add .
+#etc.
+# edit _list
+trash .git/rebase-apply/ ; git reset --hard <start> ; cj-git-applypatches PATCHES/_list
