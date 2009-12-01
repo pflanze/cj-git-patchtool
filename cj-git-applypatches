@@ -123,7 +123,7 @@ our ($listfile)=@ARGV;
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
-	Chj::Git::Functions::xgit_do "am", $s->path;
+	Chj::Git::Functions::xgit_do "am", "-3", $s->path;
 	# ^ does not output the new commitid in a clear way, thus:
 	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	$s->set_commitid ($commitid);
