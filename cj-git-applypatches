@@ -200,7 +200,7 @@ our ($listfile)=@ARGV;
 	    die "message set both from patch leader and explicitely" if $$s[Message];
 	    $leader[0]->message
 	} else {
-	    die "more than one leader patches (for message selection) selected";
+	    die "more than one leader patch (for message selection) selected";
 	}
     }
     end Class::Array;
