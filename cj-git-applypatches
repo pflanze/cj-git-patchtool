@@ -295,6 +295,7 @@ sub apply {
     for my $c (@clusters) {
 	my $applypatches=sub {
 	    for my $p (@{$c->patches}) {
+		print "==== ".$p->filename." ====\n";
 		$p->apply;
 	    }
 	};
