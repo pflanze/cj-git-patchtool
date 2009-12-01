@@ -80,19 +80,22 @@ our ($listfile)=@ARGV;
 	die "commitid already set" if $$s[Commitid];
 	$$s[Commitid]=$commitid
     }
+    use Chj::FP::lazy;
     sub message {
 	my $s=shift;
 	# hm. von patch file hm. extrahieren doch doof?  hm. eben formulieren dings, anweisung, wie das von git dann -c so nimmt gell  hm  muss id kennen hmmmm.
 	# AH  aus file die commitid extrahieren ichdep gell?wollteich. jaklar geht eh nid per neuer commidid weil die eben message nid hat--ehr zwar dochschon.und actually jene von file. hm back, doch wie geplant.
-	if ($$s[Commitid]) {
-	    ("-C",$$s[Commitid]) # to be added to git commit for the cluster
-	} else {
-	    my $msg= "missing commitid for patchfile $$s[Filename]";
-	    if ($opt_dry) {
-		_MissingCommitidError->new($msg)
+	Delay {
+	    if ($$s[Commitid]) {
+		[ "-C",$$s[Commitid] ] # to be added to git commit for the cluster
 	    } else {
-		# would fail too but  only after giving the stringified representation to git ya know
-		die $msg
+		my $msg= "missing commitid for patchfile $$s[Filename]";
+		if ($opt_dry) {
+		    _MissingCommitidError->new($msg)
+		} else {
+		    # would fail too but  only after giving the stringified representation to git ya know
+		    die $msg
+		}
 	    }
 	}
     }
@@ -188,16 +191,17 @@ our ($listfile)=@ARGV;
 	    $$a[0] cmp $$b[0]
 	} @p)[-1][1]
     }
-    sub message {
+    use Chj::FP::lazy;
+    sub maybe_message_promise {
 	my $s=shift;
 	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
 	my @leader= grep { $_->is_leader } @{$s->patches};
 	if (@leader==0) {
 	    if ($$s[Message]) {
-		("-m", $$s[Message])
+		Delay { ["-m", $$s[Message] ] } #just for consistency. so that I can Force it. Since there's no Force-if-promise or so.
 	    } else {
 		if ($s->is_singlepatch) {
-		    () # $$s[Patches][0]->message
+		    undef # $$s[Patches][0]->message
 		} else {
 		    new _NoCommitmsgError "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
 		}
@@ -273,16 +277,20 @@ sub check {
 		$errs++;
 	    };
 	}
-	my @m= $c->message;
-	#if (my @e= grep { UNIVERSAL::isa($_,"_Error") } @m) {
-	print $_->string,"\n"
-	  for (grep { if (UNIVERSAL::isa($_,"_MissingCommitidError")) { 0 } else { $errs++; 1 } }
-	       grep { UNIVERSAL::isa($_,"_Error") } @m);
+# 	my $m= $c->maybe_message_promise;
+# 	#if (my @e= grep { UNIVERSAL::isa($_,"_Error") } @m) {
+# 	print $_->string,"\n"
+# 	  for (grep { if (UNIVERSAL::isa($_,"_MissingCommitidError")) { 0 } else { $errs++; 1 } }
+# 	       grep { UNIVERSAL::isa($_,"_Error") } ($m ? Force $m : ()));
+#^can't fix. I mean,   somehowrong ach hell TODO.  darf nicht forcen. will ja  auch nur Error wissen. wann aber der ? kann nid wissen ob es nur  commitid fehlt   derzeit. still too intertwined   also das Delay um intertwining zu retten ist also ne doofe idee rite.
+#BAD. weil reason for check really genau das hier war.
     }
     $errs
 }
 
 use Chj::Git::Functions;
+use Chj::FP::lazy;
+
 sub apply {
     for my $c (@clusters) {
 	my $applypatches=sub {
@@ -290,15 +298,16 @@ sub apply {
 		$p->apply;
 	    }
 	};
-	my @msgoptions= $c->message;
-	if ($c->is_singlepatch and not @msgoptions) {
+	my $msgoptions= $c->maybe_message_promise;
+	if (not $msgoptions) {
+	    $c->is_singlepatch or die "???can only happen with singlepatches right?";
 	    &$applypatches
 	} else {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
 	    Chj::Git::Functions::xgit_do "reset", "--soft", $oldhead;
 	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
-	    Chj::Git::Functions::xgit_do "commit", @msgoptions;
+	    Chj::Git::Functions::xgit_do "commit", @{Force $msgoptions};
 	}
     }
 }
