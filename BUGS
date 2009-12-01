@@ -1,0 +1,1 @@
+- check is broken right now; meaning, it will go actually applying patches until it will die  because of some errors in file (missing msg ..)
