@@ -203,7 +203,10 @@ our ($listfile)=@ARGV;
 		if ($s->is_singlepatch) {
 		    undef # $$s[Patches][0]->message
 		} else {
-		    new _NoCommitmsgError "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
+		    my $msg="Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
+		    #new _NoCommitmsgError ;
+		    #todo find something better. right now it's broken as it is not checked in "check" anymore, and on "patch" it will feed that to Force and break this way. !
+		    die $msg
 		}
 	    }
 	} elsif (@leader==1) {
