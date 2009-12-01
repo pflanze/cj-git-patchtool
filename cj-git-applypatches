@@ -191,7 +191,7 @@ our ($listfile)=@ARGV;
 		("-m", $$s[Message])
 	    } else {
 		if ($s->is_singlepatch) {
-		    $$s[Patches][0]->message
+		    () # $$s[Patches][0]->message
 		} else {
 		    new _NoCommitmsgError "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
 		}
@@ -284,13 +284,13 @@ sub apply {
 		$p->apply;
 	    }
 	};
-	if ($c->is_singlepatch) {
+	my @msgoptions= $c->message;
+	if ($c->is_singlepatch and not @msgoptions) {
 	    &$applypatches
 	} else {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
 	    Chj::Git::Functions::xgit_do "reset", "--soft", $oldhead;
-	    my @msgoptions= $c->message;
 	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
 	    Chj::Git::Functions::xgit_do "commit", @msgoptions;
 	}
