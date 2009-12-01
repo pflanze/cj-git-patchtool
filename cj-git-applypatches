@@ -87,7 +87,13 @@ our ($listfile)=@ARGV;
 	if ($$s[Commitid]) {
 	    ("-C",$$s[Commitid]) # to be added to git commit for the cluster
 	} else {
-	    _MissingCommitidError->new("missing commitid for patchfile $$s[Filename]")
+	    my $msg= "missing commitid for patchfile $$s[Filename]";
+	    if ($opt_dry) {
+		_MissingCommitidError->new($msg)
+	    } else {
+		# would fail too but  only after giving the stringified representation to git ya know
+		die $msg
+	    }
 	}
     }
     sub author_date {
@@ -313,4 +319,5 @@ if ($errors) {
     }
 }
 #use Chj::ruse;
-#use Chj::Backtrace; use Chj::repl; repl;
+use Chj::Backtrace;
+#use Chj::repl; repl;
