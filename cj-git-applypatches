@@ -185,12 +185,7 @@ our ($listfile)=@ARGV;
     sub message {
 	my $s=shift;
 	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
-	my @leader;
-	for (@{$s->patches}) {
-	    if ($_->is_leader) {
-		push @leader,$_
-	    }
-	}#wow why didn't i use filter ehr  ah heh. wl map.
+	my @leader= grep { $_->is_leader } @{$s->patches};
 	if (@leader==0) {
 	    if ($s->is_singlepatch) {
 		$$s[Patches][0]->message
