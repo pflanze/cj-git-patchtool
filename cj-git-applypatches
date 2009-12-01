@@ -187,11 +187,11 @@ our ($listfile)=@ARGV;
 	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
 	my @leader= grep { $_->is_leader } @{$s->patches};
 	if (@leader==0) {
-	    if ($s->is_singlepatch) {
-		$$s[Patches][0]->message
+	    if ($$s[Message]) {
+		("-m", $$s[Message])
 	    } else {
-		if ($$s[Message]) {
-		    ("-m", $$s[Message])
+		if ($s->is_singlepatch) {
+		    $$s[Patches][0]->message
 		} else {
 		    new _NoCommitmsgError "Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
 		}
