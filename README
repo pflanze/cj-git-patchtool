@@ -8,3 +8,25 @@ ls *.patch > _list
 #etc.
 # edit _list
 trash .git/rebase-apply/ ; git reset --hard <start> ; cj-git-applypatches PATCHES/_list
+
+
+Editing the _list:
+
+patches on subsequent lines are squashed. put an empty line between each
+patch or group of patches that should become a new commit.
+
+Within each group, a * at beginning of line indicates the patch that
+determines the message and author time of the new commit.
+Alternatively, a group can be followed by the commit message in square
+brackets:
+[
+commit message
+
+multi line possible
+]
+
+(Or even more alternatively, add a line \d+ message file hm? untested
+or even unfinished)
+
+Except within [ commit messages ], # can be used for comment lines.
+
