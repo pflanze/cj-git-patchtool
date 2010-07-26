@@ -210,7 +210,7 @@ our ($listfile)=@ARGV;
 		}
 	    }
 	} elsif (@leader==1) {
-	    die "message set both from patch leader and explicitely" if $$s[Message];
+	    die "Cluster starting at line $$s[Line]: message set both from patch leader and explicitely" if $$s[Message];
 	    $leader[0]->message
 	} else {
 	    die "more than one leader patch (for message selection) selected";
