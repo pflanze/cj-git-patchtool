@@ -233,7 +233,7 @@ while (<$listfh>) {
     chomp;
     $line++;
     next if /^\s*#/;
-    if (/^(\*?)(\d+-.+)/) {
+    if (/^(\*?)(\d+(?:_\w+)?-.+)/) {
 	my ($is_leader,$path)=($1,$2);
 	# a squash. extend existing cluster.
 	$curcluster->add_patch(Patch->new($basedir,$path,$is_leader));
