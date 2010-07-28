@@ -3,7 +3,8 @@
 usage () {
     echo "$0 base-id basedir"
     echo " creates directory basedir, puts patches and _list there,"
-    echo " checks them into a repo, and opens _list"
+    echo " checks them into a repo, and opens _list and a terminal"
+    echo " within basedir."
     exit 1
 }
 
@@ -28,5 +29,6 @@ ls *.patch > _list
 cj-git-init
 git add .
 git commit -m "orig"
+term
 exec "$EDITOR" _list
 #or without quotes?^
