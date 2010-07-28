@@ -21,6 +21,11 @@ set -eu
 baseid="$1"
 basedir="$2"
 
+if [ -e "$basedir" ]; then
+    echo "'$basedir' already exists"
+    exit 1
+fi
+
 mkdir -p "$basedir"
 
 cd "$basedir"
