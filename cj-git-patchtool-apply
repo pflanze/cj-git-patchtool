@@ -1,0 +1,31 @@
+#!/bin/bash
+
+usage () {
+    echo "usage: $0 basedir"
+    echo "  run with the basedir created with cj-git-patchtool-start"
+    echo "  CAREFUL: runs reset --hard and applies the patches"
+    exit 1
+}
+
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+if [ "$1" = "-h" -o "$1" = "--help" ]; then
+    usage
+fi
+  
+set -eu
+
+basedir="$1"
+
+test -d .git/ || { echo "missing .git dir"; exit 1; }
+
+baseid=`cat "$basedir/_baseid"`
+
+if [ -e .git/rebase-apply/ ]; then
+    trash .git/rebase-apply/
+fi
+
+git reset --hard "$baseid"
+cj-git-applypatches "$basedir/_list"
