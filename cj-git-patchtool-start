@@ -26,6 +26,8 @@ mkdir -p "$basedir"
 cd "$basedir"
 git format-patch --thread -M -C "$baseid"..HEAD
 ls *.patch > _list
+echo "$baseid" > _baseid
+gdrop patchtool
 cj-git-init
 git add .
 git commit -m "orig"
