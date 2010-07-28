@@ -30,5 +30,5 @@ cj-git-init
 git add .
 git commit -m "orig"
 term
-exec "$EDITOR" _list
+"$EDITOR" _list &
 #or without quotes?^
