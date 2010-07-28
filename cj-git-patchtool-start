@@ -1,0 +1,32 @@
+#!/bin/bash
+
+usage () {
+    echo "$0 base-id basedir"
+    echo " creates directory basedir, puts patches and _list there,"
+    echo " checks them into a repo, and opens _list"
+    exit 1
+}
+
+if [ $# -ne 2 ]; then
+    usage
+fi
+
+if [ "$1" = "-h" -o "$1" = "--help" ]; then
+    usage
+fi
+
+set -eu
+
+baseid="$1"
+basedir="$2"
+
+mkdir -p "$basedir"
+
+cd "$basedir"
+git format-patch --thread -M -C "$baseid"..HEAD
+ls *.patch > _list
+cj-git-init
+git add .
+git commit -m "orig"
+exec "$EDITOR" _list
+#or without quotes?^
