@@ -1,0 +1,151 @@
+#!/usr/bin/perl -w
+
+# Fri Sep  3 14:50:55 EDT 2010
+(my $email='chrjae%gmail,com')=~ tr/%,/@./;
+
+use strict;
+
+$0=~ /(.*?)([^\/]+)\z/s or die "?";
+my ($mydir, $myname)=($1,$2);
+sub usage {
+    print STDERR map{"$_\n"} @_ if @_;
+    print "$myname basedir patchfilename
+  apply patchfile, then feed the rejects to wiggle,
+  if those worked out, save the new diff into the patchfile.
+
+  CAREFUL: runs reset --hard (and modifies the patchfile)
+
+  (Christian Jaeger <$email>)
+";
+exit (@_ ? 1 : 0);
+}
+
+use Getopt::Long;
+our $verbose=0;
+#our $opt_dry;
+GetOptions("verbose"=> \$verbose,
+	   "help"=> sub{usage},
+	   #"dry-run"=> \$opt_dry,
+	   ) or exit 1;
+usage unless @ARGV==2;
+
+our ($basedir,$patchfilename)=@ARGV;
+
+use Chj::xperlfunc;
+use Chj::xopen 'xopen_read';
+use Chj::xtmpfile;
+use Chj::IO::Command;
+
+my $patchpath="$basedir/$patchfilename";
+
+my $in= xopen_read $patchpath;
+
+xxsystem "git","reset","--hard";
+
+#hm grr how again pipelines sigh whatever
+my $rej= do {
+    use Chj::xpipe;
+    my ($r,$w)=xpipe;
+    if (xfork) {
+	$w->xclose;
+
+	my @rej;
+	while (<$r>) {
+	    next if /^patching file /;
+	    next if /^Hunk #\d+ FAILED/;
+	    chomp;
+	    if (/\d+ out of \d+ hunks? (?:FAILED|ignored).*saving rejects to file (.*)/) {
+		push @rej, $1;
+	    } elsif ($_ eq 'Reversed (or previously applied) patch detected!  Assume -R? [n] ') {
+		print "NOTE: $_\n";
+		#since i'm not sure what to do then.
+	    } elsif ($_ eq 'Apply anyway? [n] ') {
+		print "NOTE: $_\n";
+		#grr.  why does it ask when I said -f ?
+	    } elsif ($_ eq 'Skipping patch.') {
+		print "NOTE: $_\n";
+		#HMMMMM.
+	    } elsif (/^Hunk #\d+ succeeded/) {
+		# print?
+		print "NOTE: $_\n";
+	    } elsif (/^patch: .* malformed patch at/) {
+		# handedited patch, from xemacs, hum. anyway, hope it will be fixed by wiggle.
+		print "NOTE: $_\n";
+		#hm. but die anyway, it seems patch does not produce an actual rej file then!
+		die "cannot proceed";
+	    } elsif ($_ eq '') {
+		#eh.whatever
+	    } else {
+		die "unknown message from patch: '$_'";
+	    }
+	}
+
+	$r->xclose;
+	#my $code= xwait;
+	xwait;
+	my $code= $?; #GAH
+	($code==0
+	 or $code== (1<<8))
+	  or do {
+	      use Chj::Unix::exitcode;
+	      die "patch died of a serious error, code ".exitcode($code);
+	  };
+
+	\@rej
+    } else {
+	$r->xclose;
+	$w->xdup2(1);
+	$w->xdup2(2);
+	my $p= Chj::IO::Command->new_receiver("patch","-p1");
+	$in->xsendfile_to ($p);
+	$in->xclose;
+	$p->xfinish;
+	exit;
+    }
+};
+
+print "Ok, patch possibly applied.\n";
+
+my $nwiggles=0;
+for my $rejfile (@$rej) {
+    print "Calling wiggle for '$rejfile'..\n";
+    # +-copy from /opt/chj/bin/wiggle¬
+    my $file= $rejfile;
+    $file=~ s/\.rej$//
+      or die "file '$file' does not have suffix .rej";
+    {
+	my $porig=$file.".porig";
+	if (-e $porig) {
+	    xxsystem "trash", $porig;#wl just unlink?
+	}
+    }
+    xxsystem "wiggle", "--replace", $file,$rejfile;
+    $nwiggles++;
+}
+
+print "Ok, $nwiggles wiggles.\n";
+
+# create new patchfile:
+$in->xrewind;
+my $new= xtmpfile $patchpath;
+my $d= Chj::IO::Command->new_sender ("git","diff");
+while (<$in>) {
+    if (/^diff --git a\//) {
+	##^this is a bit unsafe, could be part of commit message!
+	## proper check would be for "---" then emptyline then diff? or something.
+	$new->xflush; #important! before sendfile
+	$d->xsendfile_to ($new);
+	$d->xxfinish;
+	$in->xclose;
+	$new->xclose;
+	$new->xputback;
+	last;
+    } else {
+	$new->xprint($_);
+    }
+}
+
+print "Ok.\n";
+
+#use Chj::ruse;
+#use Chj::Backtrace; use Chj::repl; repl;
