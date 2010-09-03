@@ -28,5 +28,10 @@ multi line possible
 (Or even more alternatively, add a line \d+ message file hm? untested
 or even unfinished)
 
+Existing commit messages can also be modified by adding a line
+starting with "prefix: " and then a string; the string will be
+prepended to the (first line of the) commit message.
+
+
 Except within [ commit messages ], # can be used for comment lines.
 

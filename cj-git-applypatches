@@ -99,6 +99,30 @@ our ($listfile)=@ARGV;
 	    }
 	}
     }
+    sub get_orig_message {
+	my $s=shift;
+	# read message from original commit
+	## eh aber will ich wirklich orig???  war bisherso? CHR?? also auch nun rit.
+	if (my $id= $$s[Commitid]) {
+	    # also. nowhow.
+	    use Chj::Git::Functions;
+	    my $rf= Chj::Git::Functions::maybe_cat_file("commit",$id)
+	      or die "could not get commit message for '$id'";
+	    $$rf=~ s/.*?\n\n//s
+	      or die "cannot match to strip headers from '$$rf'";
+	    $$rf
+	} else {
+	    ##ugh wieder? noetig?
+	    my $msg= "missing commitid for patchfile $$s[Filename]";
+	    if ($opt_dry) {
+		## hum in context that expects message string? How did I mean this? Is it overloaded?
+		_MissingCommitidError->new($msg)
+	    } else {
+		# would fail too but  only after giving the stringified representation to git ya know
+		die $msg
+	    }
+	}
+    }
     sub author_date {
 	my $s=shift;
 	#---
@@ -142,6 +166,7 @@ our ($listfile)=@ARGV;
        #'squashes', # @ of additional patches.
        #ehr. no need for distinction right.
        'patches', # paths
+       'maybe_prefix', # undef or string to be prepended to commit message
       );
     sub new {
 	my $cl=shift;
@@ -193,15 +218,27 @@ our ($listfile)=@ARGV;
     }
     use Chj::FP::lazy;
     sub maybe_message_promise {
+	# either false if message does not need to be changed,
+	# or a promise of an array of options to be fed to git.
 	my $s=shift;
 	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
+	my $prefix= defined ($$s[Maybe_prefix]) ? $$s[Maybe_prefix] : "";
 	my @leader= grep { $_->is_leader } @{$s->patches};
 	if (@leader==0) {
 	    if ($$s[Message]) {
-		Delay { ["-m", $$s[Message] ] } #just for consistency. so that I can Force it. Since there's no Force-if-promise or so.
+		Delay { ["-m", $prefix . $$s[Message] ] }
+		  # Delay just for consistency. so that I can Force it. Since there's no Force-if-promise or so.
 	    } else {
 		if ($s->is_singlepatch) {
-		    undef # $$s[Patches][0]->message
+		    if (length $prefix) {
+			use Data::Dumper;
+			warn '$$s[Patches]='.Dumper($$s[Patches]);#
+			my $thepatch= $$s[Patches][0];
+			##HELL ($$s[Patches][0]) direkt unten geht nicht. wird das geleert? !
+			Delay { [ "-m",  $prefix . ($thepatch->get_orig_message) ] }
+		    } else {
+			undef
+		    }
 		} else {
 		    my $msg="Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
 		    #new _NoCommitmsgError ;
@@ -211,7 +248,11 @@ our ($listfile)=@ARGV;
 	    }
 	} elsif (@leader==1) {
 	    die "Cluster starting at line $$s[Line]: message set both from patch leader and explicitely" if $$s[Message];
-	    $leader[0]->message
+	    if (length $prefix) {
+		Delay { [ "-m",  $prefix . ($leader[0]->get_orig_message) ] }
+	    } else {
+		$leader[0]->message
+	    }
 	} else {
 	    die "more than one leader patch (for message selection) selected";
 	}
@@ -246,7 +287,12 @@ while (<$listfh>) {
 	# a message file
 	warn "actually untested";
 	$curcluster->set_message_from_path ($path);
+    } elsif (/^prefix: ?(.*)/) {
+	# not trimming whitespace (other than that single expected space),
+	# and not adding ": ". have to do that yourself, ok?
+	$curcluster->set_maybe_prefix ($1);
     } elsif (/^\[\s*$/) {
+	# inline commit message
 	my @c;
 	while (<$listfh>) {
 	    chomp;
