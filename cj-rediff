@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -eu
+
+usage () {
+    echo "usage: $0 patchfile(s)"
+    echo "  runs 'rediff' on patchfile(s) and overwrites patchfile(s) with the result(s)"
+    exit
+}
+
+for f in "$@"; do
+    t=`tempfile`
+    rediff "$f" > "$t"
+    cp-perms "$f" "$t"
+    mv -f "$t" "$f"
+done
