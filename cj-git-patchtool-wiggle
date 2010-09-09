@@ -55,7 +55,11 @@ my $rej= do {
 	    next if /^Hunk #\d+ FAILED/;
 	    chomp;
 	    if (/\d+ out of \d+ hunks? (?:FAILED|ignored).*saving rejects to file (.*)/) {
-		push @rej, $1;
+		my $file=$1;
+		if ($file=~ s/^'//) {
+		    $file=~ s/'$// or die "hmm [$file] how?";
+		}
+		push @rej, $file;
 	    } elsif ($_ eq 'Reversed (or previously applied) patch detected!  Assume -R? [n] ') {
 		print "NOTE: $_\n";
 		#since i'm not sure what to do then.
