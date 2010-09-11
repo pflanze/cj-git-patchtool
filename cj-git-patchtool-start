@@ -32,7 +32,7 @@ cd "$basedir"
 git format-patch --thread -M -C "$baseid"..HEAD
 ls *.patch > _list
 echo "$baseid" > _baseid
-gdrop patchtool
+gdrop -a -m "for basedir '$basedir', baseid '$baseid'" patchtool
 cj-git-init
 git add .
 git commit -m "orig"
