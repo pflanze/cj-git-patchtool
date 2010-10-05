@@ -26,13 +26,22 @@ if [ -e "$basedir" ]; then
     exit 1
 fi
 
-mkdir -p "$basedir"
+tmpdir="tmp-`passwdgen`"
 
-cd "$basedir"
+mkdir "$tmpdir"
+
+cd "$tmpdir"
 git format-patch --thread -M -C "$baseid"..HEAD
 ls *.patch > _list
 echo "$baseid" > _baseid
+
+cd ..
+mv "$tmpdir" "$basedir"
+
 gdrop -a -m "for basedir '$basedir', baseid '$baseid'" patchtool
+
+cd "$basedir"
+
 cj-git-init
 git add .
 git commit -m "orig"
