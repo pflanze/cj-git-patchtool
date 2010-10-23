@@ -100,7 +100,7 @@ my $rej= do {
 	$r->xclose;
 	$w->xdup2(1);
 	$w->xdup2(2);
-	my $p= Chj::IO::Command->new_receiver("patch","-p1");
+	my $p= Chj::IO::Command->new_receiver("patch","--ignore-whitespace","-p1");
 	$in->xsendfile_to ($p);
 	$in->xclose;
 	$p->xfinish;
