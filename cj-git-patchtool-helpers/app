@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -eu
+
+usage () {
+    echo "$0"
+    echo "  runs cj-git-patchtool-apply \"\$CJ_GIT_PATCHTOOL_BASEDIR\""
+    exit 1
+}
+
+if [ $# -ne 0 ]; then
+    usage
+fi
+
+cj-git-patchtool-apply "$CJ_GIT_PATCHTOOL_BASEDIR"

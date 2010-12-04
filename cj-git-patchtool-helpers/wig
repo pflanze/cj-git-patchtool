@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -eu
+
+usage () {
+    echo "$0 patchfilename"
+    echo "  runs cj-git-patchtool-wiggle \"\$CJ_GIT_PATCHTOOL_BASEDIR\" patchfilename"
+    exit 1
+}
+
+if [ $# -ne 1 ]; then
+    usage
+fi
+if [ "$1" = "-h" -o "$1" = "--help" ]; then
+    usage
+fi
+
+cj-git-patchtool-wiggle "$CJ_GIT_PATCHTOOL_BASEDIR" "$1"
+

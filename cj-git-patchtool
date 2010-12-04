@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# a shell around the tools
+
+set -eu
+
+# config:
+
+export CJ_GIT_PATCHTOOL_SOURCEDIR=/root/TEMP/cj-git-patchtool
+
+BASEBASEDIR=PATCHES
+##^^ BUT: also update PATCHES in perl snipped below!gr (along with /P assumption)
+
+# /config
+
+usage () {
+    echo "$0 -s|--start baseid"
+    echo "  or"
+    echo "$0 --resume basedir"
+    echo "  start a shell with commands 'app' and 'wig' etc.;"
+    echo "  if -s or --start is given, a new basedir (under '$BASEBASEDIR')"
+    echo "  is created and filled;"
+    echo "  otherwise expects --resume to use a pre-existing basedir."
+    echo "  Just quit the shell when done."
+    exit 1
+}
+
+if [ $# -eq 2 ]; then
+    if [ "$1" = "-s" -o "$1" = "--start" ]; then
+	# start new patch session
+	# find newest number and increment. r.
+	n=`perl -w -MChj::xperlfunc=basename -e '$m=-1; for (glob "PATCHES/P*") { $bn=basename $_; if ($bn=~ /^P(\d+)/) { $n=$1; if ($n > $m) { $m= $n }}} print $m+1, "\n"'`
+	CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/P$n"
+	# beleben es
+	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/cj-git-patchtool-start "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
+    elif [ "$1" = "--resume" ]; then
+	# continue with an existing patch session
+	CJ_GIT_PATCHTOOL_BASEDIR="$2"
+    else
+	usage
+    fi
+else
+    usage
+fi
+
+export CJ_GIT_PATCHTOOL_BASEDIR
+
+exec bash  --rcfile "$CJ_GIT_PATCHTOOL_SOURCEDIR/cj-git-patchtool.rc" -i
+
