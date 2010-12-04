@@ -32,6 +32,10 @@ if [ '!' -d "$basebasedir" ]; then
     exit 1
 fi
 
+if ! cj-git-status-is-clean; then
+    exit 1
+fi
+
 tmpdir="tmp-`passwdgen`"
 
 mkdir "$tmpdir"
