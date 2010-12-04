@@ -26,6 +26,12 @@ if [ -e "$basedir" ]; then
     exit 1
 fi
 
+basebasedir=`dirname "$basedir"`
+if [ '!' -d "$basebasedir" ]; then
+    echo "directory '$basebasedir' does not exist"
+    exit 1
+fi
+
 tmpdir="tmp-`passwdgen`"
 
 mkdir "$tmpdir"
