@@ -32,7 +32,7 @@ if [ $# -eq 2 ]; then
 	n=`perl -w -MChj::xperlfunc=basename -e '$m=-1; for (glob "PATCHES/P*") { $bn=basename $_; if ($bn=~ /^P(\d+)/) { $n=$1; if ($n > $m) { $m= $n }}} print $m+1, "\n"'`
 	CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/P$n"
 	# beleben es
-	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/cj-git-patchtool-start "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
+	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
     elif [ "$1" = "--resume" ]; then
 	# continue with an existing patch session
 	CJ_GIT_PATCHTOOL_BASEDIR="$2"
