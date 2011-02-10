@@ -35,3 +35,10 @@ prepended to the (first line of the) commit message.
 
 Except within [ commit messages ], # can be used for comment lines.
 
+
+
+TIPS:
+----
+
+use the "dupa" tool in ~chris/bin/.git for duplicating patches (for
+splitting them)
