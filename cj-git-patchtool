@@ -25,12 +25,26 @@ usage () {
     exit 1
 }
 
+hn=`hostname`
+
 if [ $# -eq 2 ]; then
     if [ "$1" = "-s" -o "$1" = "--start" ]; then
 	# start new patch session
 	# find newest number and increment. r.
-	n=`perl -w -MChj::xperlfunc=basename -e '$m=-1; for (glob "PATCHES/P*") { $bn=basename $_; if ($bn=~ /^P(\d+)/) { $n=$1; if ($n > $m) { $m= $n }}} print $m+1, "\n"'`
-	CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/P$n"
+	n=`perl -w -MChj::xperlfunc=basename -e \
+	'
+$m=-1;
+for (glob "PATCHES/P-'"$hn"'-*") {
+    $bn=basename $_;
+    if ($bn=~ /^P-'"$hn"'-(\d+)/) {
+        $n=$1;
+	if ($n > $m) {
+	    $m= $n
+	}
+    }
+}
+print $m+1, "\n"'`
+	CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/P-$hn-$n"
 	# beleben es
 	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
     elif [ "$1" = "--resume" ]; then
