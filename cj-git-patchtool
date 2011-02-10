@@ -34,9 +34,9 @@ if [ $# -eq 2 ]; then
 	n=`perl -w -MChj::xperlfunc=basename -e \
 	'
 $m=-1;
-for (glob "PATCHES/P-'"$hn"'-*") {
+for (glob "PATCHES/'"$hn"'-*") {
     $bn=basename $_;
-    if ($bn=~ /^P-'"$hn"'-(\d+)/) {
+    if ($bn=~ /^'"$hn"'-(\d+)/) {
         $n=$1;
 	if ($n > $m) {
 	    $m= $n
@@ -44,7 +44,7 @@ for (glob "PATCHES/P-'"$hn"'-*") {
     }
 }
 print $m+1, "\n"'`
-	CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/P-$hn-$n"
+	CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/$hn-$n"
 	# beleben es
 	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
     elif [ "$1" = "--resume" ]; then
