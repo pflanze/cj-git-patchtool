@@ -25,14 +25,14 @@ to edit.
 
 If you run this tool the first time:
 
-# mkdir PATCHES
-# git config --global core.excludesfile ~/.gitignore_global
-# echo /PATCHES/ >> ~/.gitignore_global
+$ mkdir PATCHES
+$ git config --global core.excludesfile ~/.gitignore_global
+$ echo /PATCHES/ >> ~/.gitignore_global
 
 Find the commit before the oldest commit you want to include in the
 history, then run (-s and --start are equivalent):
 
-# cj-git-patchtool -s $commitbeforeoldest
+$ cj-git-patchtool -s $commitbeforeoldest
 
 This will open two windows, (a) an editor window with a file named
 "_list" containing a list of all patches (the history), and (b) a
@@ -74,12 +74,12 @@ you're in a subshell there. The subshell sees some new commands, and
 those know where to find the directory with the history state without
 further ado. To apply the history, run:
 
-# app
+$ app
 
 If the history applies cleanly, it will say "Ok" at the
 end. Otherwise, fix your _list, or if it's a conflict, try:
 
-# wig patchfilename
+$ wig patchfilename
 
 This will run "wiggle" and if it worked, will save the resolved file
 back to the patch file so that you don't have to run "wig" in
@@ -90,7 +90,7 @@ the state files, and exit the subshell (hit ctl-d).
 
 If you later decide that you haven't actually finished, run:
 
-# cj-git-patchtool --resume PATCHES/$name_of_the_patch_subdirectory
+$ cj-git-patchtool --resume PATCHES/$name_of_the_patch_subdirectory
 
 to get back into the subshell. (Currently, you'll have to reopen the
 _list file and terminal with the state directory manually.)
