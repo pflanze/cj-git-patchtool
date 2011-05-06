@@ -99,5 +99,5 @@ _list file and terminal with the state directory manually.)
 TIPS:
 ----
 
-use the "dupa" tool in ~chris/bin/.git for duplicating patches (for
+use the "dupa" tool from chj-bin.git for duplicating patches (for
 splitting them)
