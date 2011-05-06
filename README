@@ -119,7 +119,7 @@ _list file and terminal with the state directory manually.)
 
 
 TIPS:
-----
+====
 
 use the "dupa" tool from chj-bin.git for duplicating patches (for
 splitting them)
