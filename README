@@ -1,40 +1,99 @@
+This is a tool to edit the history of a Git repository.
 
-mkdir PATCHES
-cd PATCHES
-git format-patch --thread -M -C <start..end>
-ls *.patch > _list
-# git init
-# git add .
-#etc.
-# edit _list
-trash .git/rebase-apply/ ; git reset --hard <start> ; cj-git-applypatches PATCHES/_list
+In that regard is similar to "git rebase -i"; but unlike it, with
+cj-git-patchtool you edit the history in a file that persists across
+modification runs, so you can do changes successively without risk of
+loosing your editing work. But not only the history is kept in a file,
+but the patches as well: this allows to edit individual patches
+persistently, too. There's also a tool included called "wig" which
+uses "wiggle" to try to resolve conflicts that can arise from history
+changes; and it saves the resolutions back into the patch files,
+too. So, it always gives you access to the state in the form of disk
+files, and you can change it and re-"run" the modifications until
+you're done. It even checks the files into a new Git repository on its
+own, so that you can commit your changes to the state if you want, to
+keep a history of your history editing work :).
 
 
-Editing the _list:
+USAGE:
+=====
 
-patches on subsequent lines are squashed. put an empty line between each
-patch or group of patches that should become a new commit.
+Go to the root of the working directory of the Git repository whose
+history you want to change, and check out the branch that you want to
+change, with HEAD being the last commit of the history that you want
+to edit.
 
-Within each group, a * at beginning of line indicates the patch that
-determines the message and author time of the new commit.
-Alternatively, a group can be followed by the commit message in square
-brackets:
+If you run this tool the first time:
+
+# mkdir PATCHES
+# git config --global core.excludesfile ~/.gitignore_global
+# echo /PATCHES/ >> ~/.gitignore_global
+
+Find the commit before the oldest commit you want to include in the
+history, then run (-s and --start are equivalent):
+
+# cj-git-patchtool -s $commitbeforeoldest
+
+This will open two windows, (a) an editor window with a file named
+"_list" containing a list of all patches (the history), and (b) a
+terminal window with the shell prompt in the directory that contains
+the file that has been opened in the editor, as well as all the
+individual patch files (as well as a file "_baseid" that contains
+$commitbeforeoldest), as well as a .git dir with these files already
+checked in (in case you want to commit your editing work).
+
+Now edit the _list, adhering to these rules:
+
+* patches on subsequent lines are squashed. put an empty line between
+  each patch or group of patches that should become a new commit.
+
+* Within each group, either put a star "*" at beginning of a line to
+  indicate the patch that determines the message and author time of
+  the new commit, or alternatively, insert a group of lines somewhere
+  in the group, starting and ending in square brackets that contains
+  the commit message, like:
 [
-commit message
+commit-message
 
-multi line possible
+multiple lines are possible
 ]
 
-(Or even more alternatively, add a line \d+ message file hm? untested
-or even unfinished)
+* Existing commit messages can also be modified by adding a line
+  starting with "prefix: " and then a string; the string will be
+  prepended to the commit message.
 
-Existing commit messages can also be modified by adding a line
-starting with "prefix: " and then a string; the string will be
-prepended to the (first line of the) commit message.
+* any line that start with "#" is ignored
 
+(I suggest you run "gitk &" and step through the history to see the
+full commit messages and diffs easily while editing _list.)
 
-Except within [ commit messages ], # can be used for comment lines.
+If you want to apply the changed history, go to the terminal where you
+ran cj-git-patchtool. It should now display
+PATCHES/$name_of_the_patch_subdirectory; this is a reminder that
+you're in a subshell there. The subshell sees some new commands, and
+those know where to find the directory with the history state without
+further ado. To apply the history, run:
 
+# app
+
+If the history applies cleanly, it will say "Ok" at the
+end. Otherwise, fix your _list, or if it's a conflict, try:
+
+# wig patchfilename
+
+This will run "wiggle" and if it worked, will save the resolved file
+back to the patch file so that you don't have to run "wig" in
+subsequent "app" runs.
+
+If you're done, just close the editor buffer, exit the terminal with
+the state files, and exit the subshell (hit ctl-d).
+
+If you later decide that you haven't actually finished, run:
+
+# cj-git-patchtool --resume PATCHES/$name_of_the_patch_subdirectory
+
+to get back into the subshell. (Currently, you'll have to reopen the
+_list file and terminal with the state directory manually.)
 
 
 TIPS:
