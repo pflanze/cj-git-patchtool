@@ -15,6 +15,28 @@ own, so that you can commit your changes to the state if you want, to
 keep a history of your history editing work :).
 
 
+INSTALLATION:
+============
+
+* install chj-bin and chj-perllib:
+
+   # cd /opt; mkdir chj; cd chj
+   # git clone https://github.com/pflanze/chj-perllib.git perllib
+   # git clone https://github.com/pflanze/chj-bin.git bin
+   # mkdir /usr/local/lib/site_perl/ # if it doesn't exist already
+   # ln -s /opt/chj/perllib/Chj /usr/local/lib/site_perl/
+
+  and add /opt/chj/bin to your PATH (through your .bash_profile or
+  similar)
+
+*  # cd /opt/chj
+   # git clone https://github.com/pflanze/cj-git-patchtool.git
+
+  and add /opt/chj/cj-git-patchtool to your PATH
+
+* install wiggle (Debian has it in the "wiggle" package)
+
+
 USAGE:
 =====
 
