@@ -10,6 +10,9 @@ my ($mydir, $myname)=($1,$2);
 sub usage {
     print STDERR map{"$_\n"} @_ if @_;
     print "$myname basedir patchfilename
+ -or-
+$myname basedir/patchfilename
+
   apply patchfile, then feed the rejects to wiggle,
   if those worked out, save the new diff into the patchfile.
 
@@ -27,16 +30,22 @@ GetOptions("verbose"=> \$verbose,
 	   "help"=> sub{usage},
 	   #"dry-run"=> \$opt_dry,
 	   ) or exit 1;
-usage unless @ARGV==2;
 
-our ($basedir,$patchfilename)=@ARGV;
+our $patchpath = do {
+    if (@ARGV==2) {
+	my($basedir,$patchfilename)=@ARGV;
+	"$basedir/$patchfilename"
+    } elsif (@ARGV==1) {
+	$ARGV[0]
+    } else {
+	usage
+    }
+};
 
 use Chj::xperlfunc;
 use Chj::xopen 'xopen_read';
 use Chj::xtmpfile;
 use Chj::IO::Command;
-
-my $patchpath="$basedir/$patchfilename";
 
 my $in= xopen_read $patchpath;
 
