@@ -55,6 +55,11 @@ our ($listfile)=@ARGV;
     our @ISA=("_Error");
 }
 
+
+use Chj::Git::Functions 'make_xgit_do';
+sub xgit_do;
+*xgit_do= make_xgit_do; # caching the location of the git dir
+
 {
     package Patch;
     use Class::Array -fields=> -publica=>
@@ -147,7 +152,7 @@ our ($listfile)=@ARGV;
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
-	Chj::Git::Functions::xgit_do "am", "-3", $s->path;
+	main::xgit_do "am", "-3", $s->path;
 	# ^ does not output the new commitid in a clear way, thus:
 	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	$s->set_commitid ($commitid);
@@ -355,9 +360,9 @@ sub apply {
 	} else {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
-	    Chj::Git::Functions::xgit_do "reset", "--soft", $oldhead;
+	    main::xgit_do "reset", "--soft", $oldhead;
 	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
-	    Chj::Git::Functions::xgit_do "commit", @{Force $msgoptions};
+	    main::xgit_do "commit", @{Force $msgoptions};
 	}
     }
 }
