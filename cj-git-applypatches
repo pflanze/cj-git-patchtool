@@ -56,12 +56,17 @@ our ($listfile)=@ARGV;
 }
 
 
-use Chj::Git::Functions 'make_xgit_do_hack';
-sub xgit_do;
-*xgit_do= make_xgit_do_hack
+use Chj::Git::Functions qw(make_xgit_do_hack git_wait_lock xgit_do);
+use Chj::xperlfunc;
+
+sub xgit_do_hack;
+*xgit_do_hack= make_xgit_do_hack
   (sub {
        my ($base)=@_;
        xsystem "trash", "$base/rebase-apply";
+       git_wait_lock ($base);
+       xgit_do "reset","--hard"; # needed?
+       git_wait_lock ($base);
    });
 
 {
@@ -156,7 +161,7 @@ sub xgit_do;
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
-	main::xgit_do "am", "-3", $s->path;
+	main::xgit_do_hack "am", "-3", $s->path;
 	# ^ does not output the new commitid in a clear way, thus:
 	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	$s->set_commitid ($commitid);
@@ -364,9 +369,9 @@ sub apply {
 	} else {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
-	    main::xgit_do "reset", "--soft", $oldhead;
+	    main::xgit_do_hack "reset", "--soft", $oldhead;
 	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
-	    main::xgit_do "commit", @{Force $msgoptions};
+	    main::xgit_do_hack "commit", @{Force $msgoptions};
 	}
     }
 }
