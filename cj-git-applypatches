@@ -56,9 +56,13 @@ our ($listfile)=@ARGV;
 }
 
 
-use Chj::Git::Functions 'make_xgit_do';
+use Chj::Git::Functions 'make_xgit_do_hack';
 sub xgit_do;
-*xgit_do= make_xgit_do; # caching the location of the git dir
+*xgit_do= make_xgit_do_hack
+  (sub {
+       my ($base)=@_;
+       xsystem "trash", "$base/rebase-apply";
+   });
 
 {
     package Patch;
