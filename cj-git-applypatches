@@ -306,7 +306,7 @@ while (<$listfh>) {
 		last;
 	    }
 	    if (/^#/) {
-		die "comments inside comment declarations not allowed: '$_'";
+		warn "NOTE: comments inside commit message: '$_'\n";
 	    }
 	    push @c, $_
 	}
