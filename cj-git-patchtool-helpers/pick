@@ -138,7 +138,8 @@ sub commit {
     }
 }
 
-commit "pick", @targets;
+commit "pick", @targets
+  if @targets;
 
 sub apply {
     my ($target)=@_;
