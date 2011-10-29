@@ -40,15 +40,18 @@ use Chj::Git::Functions ":all";
 use Chj::xperlfunc ":all";
 
 sub reset_hard {
-    xgit_do "reset","--hard";
-    xxsystem "trash",".git/rebase-apply";
+    my ($gitdir)=@_;
+    xgit_do "reset","--hard"; #still assumes cwd in git repo
+    $gitdir||=".git"; ##
+    my $d= "$gitdir/rebase-apply";
+    xxsystem "trash",$d if -e $d;
 }
 
 sub xgit_do_hack_reset;
 *xgit_do_hack_reset=
   make_xgit_do_hack (sub {
 			 my ($gitdir)=@_;
-			 reset_hard;
+			 reset_hard ($gitdir);
 			 git_wait_lock $gitdir;
 		     });
 
