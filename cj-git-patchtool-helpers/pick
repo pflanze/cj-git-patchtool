@@ -103,6 +103,7 @@ sub pick {
     # first try:
     if (eval {
 	xgit_do_hack_reset "cherry-pick", $commit;
+	1; #don't forget!!
     }) {
 	# ok done
     } else {
