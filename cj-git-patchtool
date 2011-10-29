@@ -16,10 +16,14 @@ BASEBASEDIR=PATCHES
 usage () {
     echo "$0 -s|--start baseid"
     echo "  or"
+    echo "$0 --pick"
+    echo "  or"
     echo "$0 --resume basedir"
     echo "  start a shell with commands 'app' and 'wig' etc.;"
     echo "  if -s or --start is given, a new basedir (under '$BASEBASEDIR')"
     echo "  is created and filled;"
+    echo "  if --pick is given, a new basedir is created but no patches are"
+    echo "  put there, just an empty git repo, this is mean for using 'pick'"
     echo "  otherwise expects --resume to use a pre-existing basedir."
     echo "  Just quit the shell when done."
     exit 1
@@ -27,11 +31,10 @@ usage () {
 
 hn=`hostname`
 
-if [ $# -eq 2 ]; then
-    if [ "$1" = "-s" -o "$1" = "--start" ]; then
-	# start new patch session
-	# find newest number and increment. r.
-	n=`perl -w -MChj::xperlfunc=basename -e \
+
+choose_basedir () {
+    # find newest number and increment.
+    n=`perl -w -MChj::xperlfunc=basename -e \
 	'
 $m=-1;
 for (glob "PATCHES/'"$hn"'-*") {
@@ -44,12 +47,32 @@ for (glob "PATCHES/'"$hn"'-*") {
     }
 }
 print $m+1, "\n"'`
-	CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/$hn-$n"
-	# beleben es
-	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
+    CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/$hn-$n"
+}
+
+
+if [ $# -eq 2 ]; then
+    if [ "$1" = "-s" -o "$1" = "--start" ]; then
+	# start new patch session
+	choose_basedir
+	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start \
+	    "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
     elif [ "$1" = "--resume" ]; then
 	# continue with an existing patch session
 	CJ_GIT_PATCHTOOL_BASEDIR="$2"
+    else
+	usage
+    fi
+elif [ $# -eq 1 ]; then
+    if [ "$1" = "--pick" ]; then
+	choose_basedir
+	# only initialize a repo
+	mkdir "$CJ_GIT_PATCHTOOL_BASEDIR"
+	(
+	    set -eu
+	    cd "$CJ_GIT_PATCHTOOL_BASEDIR"
+	    cj-git-init
+	)
     else
 	usage
     fi
