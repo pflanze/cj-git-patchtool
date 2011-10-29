@@ -1,0 +1,123 @@
+#!/usr/bin/perl -w
+
+# Sat Oct 29 01:47:21 EDT 2011
+(my $email='XXX%YYY,ch')=~ tr/%,/@./;
+
+use strict;
+
+our $CJ_GIT_PATCHTOOL_BASEDIR= $ENV{CJ_GIT_PATCHTOOL_BASEDIR}
+  or die "must be run from cj-git-patchtool shell";
+
+$0=~ /(.*?)([^\/]+)\z/s or die "?";
+my ($mydir, $myname)=($1,$2);
+sub usage {
+    print STDERR map{"$_\n"} @_ if @_;
+    print "$myname commit(s)
+
+  Like cherry-pick, but creates a patch file with the given commit(s),
+  moves it (them) to the patch dir ('$CJ_GIT_PATCHTOOL_BASEDIR'), adds
+  and commits them there, then applies them with wig [if git am doesn't
+  work].
+
+  (Christian Jaeger <$email>)
+";
+exit (@_ ? 1 : 0);
+}
+
+use Getopt::Long;
+our $verbose=0;
+#our $opt_dry;
+GetOptions("verbose"=> \$verbose,
+	   "help"=> sub{usage},
+	   #"dry-run"=> \$opt_dry,
+	   ) or exit 1;
+usage unless @ARGV;
+
+#use Chj::ruse;
+#use Chj::Backtrace; use Chj::repl; repl;
+
+use Chj::Git::Functions ":all";
+use Chj::xperlfunc ":all";
+
+sub reset_hard {
+    xgit_do "reset","--hard";
+    xxsystem "trash",".git/rebase-apply";
+}
+
+sub xgit_do_hack_reset;
+*xgit_do_hack_reset=
+  make_xgit_do_hack (sub {
+			 my ($gitdir)=@_;
+			 reset_hard;
+			 git_wait_lock $gitdir;
+		     });
+
+
+# hm get patch file incl name, sigh, we had this once didn't we ?
+# ah:
+#xxsystem "g-format-patches", "--targetdir", ..., '--', @commits;
+#eh but odd, now i'm going to write a --print option but git format-patch already prints it? duh.
+
+use Chj::Xbacktick;
+use Chj::Chomp;
+
+#our @targetpaths;
+our  @targets;
+
+sub pick {
+    my ($commit)=@_;
+
+    # get patch file incl path:
+    my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
+    my $fn= basename $path;
+    # make it what? maybe:
+    $fn=~ s/^\d{4}-/0000-/;
+    my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
+    xlinkunlink $path, $targetpath;
+
+    push @targets, [$commit,$fn,$targetpath];
+}
+
+pick $_ for @ARGV;
+
+if (my $pid= xfork) {
+    xxwaitpid $pid,0;
+} else {
+    xchdir $CJ_GIT_PATCHTOOL_BASEDIR;
+
+    xgit_do "add", map { $$_[1]} @targets;
+
+    # usually single line, so?:
+    my $msg= join ("", map {"pick $_\n"}
+		   map { "$$_[0] = $$_[1]"} @targets);
+    xgit_do "commit", "-m", $msg,
+      map { $$_[1]} @targets;
+
+    exit 0;
+}
+
+# hm check whether status is clean, we've had this, too, right?
+Xbacktick "git", "status";
+#hmm ?
+
+sub apply {
+    my ($target)=@_;
+    my ($commit,$fn,$targetpath)=@$target;
+    if (eval {
+	xgit_do_hack_reset "am", $targetpath;
+	1
+    }) {
+	# well, am succeeded, what do we want more.
+    } else {
+	my $e=$@;
+	#if ($e=~ )
+	#well, it failed, that's enough isn't it ?
+	#so, try wig now,
+	xxsystem "wig", $fn
+    }
+}
+
+# hmm  how can i apply all of them? wll abort on first error.
+
+apply $_ for @targets;
+
