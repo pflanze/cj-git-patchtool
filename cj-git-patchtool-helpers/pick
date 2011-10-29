@@ -14,10 +14,10 @@ sub usage {
     print STDERR map{"$_\n"} @_ if @_;
     print "$myname commit(s)
 
-  Like cherry-pick, but creates a patch file with the given commit(s),
-  moves it (them) to the patch dir ('$CJ_GIT_PATCHTOOL_BASEDIR'), adds
-  and commits them there, then applies them with wig [if git am doesn't
-  work].
+  Like cherry-pick (or actually *does* first try with cherry-pick),
+  but creates a patch file with the given commit(s), moves it (them)
+  to the patch dir ('$CJ_GIT_PATCHTOOL_BASEDIR'), adds and commits
+  them there, then applies them with wig [if git am doesn't work].
 
   (Christian Jaeger <$email>)
 ";
@@ -87,21 +87,34 @@ sub next_patchno_str {
     sprintf("%04d",$last_patchno)
 }
 
+# hm check whether status is clean, we've had this, too, right?
+Xbacktick "git", "status";
+#hmm ?
+
+
 #our @targetpaths;
 our  @targets;
 
 sub pick {
     my ($commit)=@_;
+    # first try:
+    if (eval {
+	xgit_do_hack_reset "cherry-pick", $commit;
+    }) {
+	# ok done
+    } else {
+	reset_hard;
 
-    # get patch file incl path:
-    my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
-    my $fn= basename $path;
-    my $no= next_patchno_str;
-    $fn=~ s/^\d{4}-/$no-/;
-    my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
-    xlinkunlink $path, $targetpath;
+	# get patch file incl path:
+	my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
+	my $fn= basename $path;
+	my $no= next_patchno_str;
+	$fn=~ s/^\d{4}-/$no-/;
+	my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
+	xlinkunlink $path, $targetpath;
 
-    push @targets, [$commit,$fn,$targetpath];
+	push @targets, [$commit,$fn,$targetpath];
+    }
 }
 
 pick $_ for @ARGV;
@@ -126,10 +139,6 @@ sub commit {
 }
 
 commit "pick", @targets;
-
-# hm check whether status is clean, we've had this, too, right?
-Xbacktick "git", "status";
-#hmm ?
 
 sub apply {
     my ($target)=@_;
