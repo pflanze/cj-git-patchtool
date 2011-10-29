@@ -80,21 +80,26 @@ sub pick {
 
 pick $_ for @ARGV;
 
-if (my $pid= xfork) {
-    xxwaitpid $pid,0;
-} else {
-    xchdir $CJ_GIT_PATCHTOOL_BASEDIR;
+sub commit {
+    my ($prefix, @targets)=@_;
+    if (my $pid= xfork) {
+	xxwaitpid $pid,0;
+    } else {
+	xchdir $CJ_GIT_PATCHTOOL_BASEDIR;
 
-    xgit_do "add", map { $$_[1]} @targets;
+	xgit_do "add", map { $$_[1]} @targets;
 
-    # usually single line, so?:
-    my $msg= join ("", map {"pick $_\n"}
-		   map { "$$_[0] = $$_[1]"} @targets);
-    xgit_do "commit", "-m", $msg,
-      map { $$_[1]} @targets;
+	# usually single line, so?:
+	my $msg= join ("", map {"$prefix $_\n"}
+		       map { "$$_[0] = $$_[1]"} @targets);
+	xgit_do "commit", "-m", $msg,
+	  map { $$_[1]} @targets;
 
-    exit 0;
+	exit 0;
+    }
 }
+
+commit "pick", @targets;
 
 # hm check whether status is clean, we've had this, too, right?
 Xbacktick "git", "status";
@@ -107,13 +112,18 @@ sub apply {
 	xgit_do_hack_reset "am", $targetpath;
 	1
     }) {
-	# well, am succeeded, what do we want more.
+	# well, "am" succeeded, what do we want more.
     } else {
 	my $e=$@;
 	#if ($e=~ )
 	#well, it failed, that's enough isn't it ?
 	#so, try wig now,
-	xxsystem "wig", $fn
+	xxsystem "wig", $fn;
+	# so, wig succeeded, commit again
+	commit "wig", $target;
+	# and, apply it, now that it should apply cleanly
+	reset_hard;
+	xgit_do_hack_reset "am", $targetpath;
     }
 }
 
