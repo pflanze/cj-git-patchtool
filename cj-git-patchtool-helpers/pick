@@ -131,3 +131,4 @@ sub apply {
 
 apply $_ for @targets;
 
+print "\nOk.\n";
