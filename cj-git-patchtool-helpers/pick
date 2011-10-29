@@ -61,6 +61,32 @@ sub xgit_do_hack_reset;
 use Chj::Xbacktick;
 use Chj::Chomp;
 
+## move to a lib? (already copy from cj-git-patchtool, basically)
+sub max_number_in {
+    my ($glob,$bn_re)=@_;
+    my $m=-1;
+    for (glob $glob) {
+	my $bn=basename $_;
+	if ($bn=~ m/$bn_re/) {
+	    my $n=$1;
+	    if ($n > $m) {
+		$m= $n
+	    }
+	}
+    }
+    $m+0
+      # decimal
+}
+##/
+
+my $last_patchno=
+  max_number_in ("max_number_in$CJ_GIT_PATCHTOOL_BASEDIR/????-*",
+		 qr/^(\d{4})-/);
+sub next_patchno_str {
+    $last_patchno++;
+    sprintf("%04d",$last_patchno)
+}
+
 #our @targetpaths;
 our  @targets;
 
@@ -70,8 +96,8 @@ sub pick {
     # get patch file incl path:
     my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
     my $fn= basename $path;
-    # make it what? maybe:
-    $fn=~ s/^\d{4}-/0000-/;
+    my $no= next_patchno_str;
+    $fn=~ s/^\d{4}-/$no-/;
     my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
     xlinkunlink $path, $targetpath;
 
