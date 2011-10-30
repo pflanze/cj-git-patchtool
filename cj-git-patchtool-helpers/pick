@@ -203,7 +203,7 @@ sub apply {
     my ($target)=@_;
     my ($commit,$fn,$targetpath)=@$target;
     if (eval {
-	xgit_do_hack_reset "am", $targetpath;
+	xgit_do_hack_reset "am", "-3", $targetpath;
 	1
     }) {
 	# well, "am" succeeded, what do we want more.
@@ -217,7 +217,7 @@ sub apply {
 	commit "wig", $target;
 	# and, apply it, now that it should apply cleanly
 	reset_hard;
-	xgit_do_hack_reset "am", $targetpath;
+	xgit_do_hack_reset "am", "-3" $targetpath;
     }
 }
 
