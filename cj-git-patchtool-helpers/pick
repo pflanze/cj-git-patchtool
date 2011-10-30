@@ -10,6 +10,9 @@ our $CJ_GIT_PATCHTOOL_BASEDIR= $ENV{CJ_GIT_PATCHTOOL_BASEDIR}
 
 $0=~ /(.*?)([^\/]+)\z/s or die "?";
 my ($mydir, $myname)=($1,$2);
+
+our $statusfile= "$CJ_GIT_PATCHTOOL_BASEDIR/.$myname.status";
+
 sub usage {
     print STDERR map{"$_\n"} @_ if @_;
     print "$myname commit(s)
@@ -19,6 +22,15 @@ sub usage {
   to the patch dir ('$CJ_GIT_PATCHTOOL_BASEDIR'), adds and commits
   them there, then applies them with wig [if git am doesn't work].
 
+  NOTE: when given multiple commits, be aware that the first failure
+  will stop processing the remaining ones well.
+
+  Options:
+   --cont  after abort because of non-wig'eable changes, and
+           handfixing the result, call pick --cont to take the diff
+           between HEAD and the working dir as new patch (it will keep
+           the original commit message and meta information)
+
   (Christian Jaeger <$email>)
 ";
 exit (@_ ? 1 : 0);
@@ -27,11 +39,21 @@ exit (@_ ? 1 : 0);
 use Getopt::Long;
 our $verbose=0;
 #our $opt_dry;
+our $opt_cont;
 GetOptions("verbose"=> \$verbose,
 	   "help"=> sub{usage},
+	   "cont"=> \$opt_cont,
 	   #"dry-run"=> \$opt_dry,
 	   ) or exit 1;
-usage unless @ARGV;
+if (@ARGV) {
+    if ($opt_cont) {
+	usage "either give commits, or --cont, not both"
+    } else {
+	# ok
+    }
+} else {
+    usage unless $opt_cont
+}
 
 #use Chj::ruse;
 #use Chj::Backtrace; use Chj::repl; repl;
@@ -63,6 +85,27 @@ sub xgit_do_hack_reset;
 
 use Chj::Xbacktick;
 use Chj::Chomp;
+use Chj::xtmpfile;
+use Data::Dumper;
+use Chj::xopen 'xopen_read';
+
+sub savestate {
+    my ($v)=@_;
+    my $t= xtmpfile $statusfile;
+    $t->xprint(Dumper $v);
+    $t->xclose;
+    $t->xputback(0644);
+}
+
+sub loadstate {
+    my $t= xopen_read $statusfile;
+    my $v= $t->xcontent;
+    $t->xclose;
+    my $r= eval ('my '.$v); ##XXX use a non code format?
+    die "evaling content of '$statusfile': $@" if $@;
+    $r
+}
+
 
 ## move to a lib? (already copy from cj-git-patchtool, basically)
 sub max_number_in {
@@ -95,33 +138,47 @@ Xbacktick "git", "status";
 #hmm ?
 
 
-#our @targetpaths;
-our  @targets;
+our @targets;
 
 sub pick {
     my ($commit)=@_;
     # first try:
+    my $cnt;
     if (eval {
-	xgit_do_hack_reset "cherry-pick", $commit;
+	#xgit_do_hack_reset "cherry-pick", $commit;
+	##sgh what does xgit_do_hack_reset all do for me again?
+	my $in= Chj::IO::Command->new_combinedsender("git","cherry-pick", $commit);
+	$cnt=$in->xcontent;
+	$in->xxfinish;
+	# XXX ^ if that excepts, then  how clean up, not at all?
 	1; #don't forget!!
     }) {
 	# ok done
     } else {
-	reset_hard;
+	if ($cnt=~ /nothing to commit/) {
+	    # XX ^ safer check?
+	    warn "pick: commit seems already applied, ignoring: $commit\n";
+	} else {
+	    reset_hard;
 
-	# get patch file incl path:
-	my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
-	my $fn= basename $path;
-	my $no= next_patchno_str;
-	$fn=~ s/^\d{4}-/$no-/;
-	my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
-	xlinkunlink $path, $targetpath;
+	    # get patch file incl path:
+	    my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
+	    my $fn= basename $path;
+	    my $no= next_patchno_str;
+	    $fn=~ s/^\d{4}-/$no-/;
+	    my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
+	    xlinkunlink $path, $targetpath;
 
-	push @targets, [$commit,$fn,$targetpath];
+	    push @targets, bless [$commit,$fn,$targetpath], "CHJ_pick::Target";
+	}
     }
 }
 
-pick $_ for @ARGV;
+{
+    package CHJ_pick::Target;
+    use Class::Array -fields=> -publica=> qw(commit filename path);
+    end CHJ_pick::Target;
+}
 
 sub commit {
     my ($prefix, @targets)=@_;
@@ -141,9 +198,6 @@ sub commit {
 	exit 0;
     }
 }
-
-commit "pick", @targets
-  if @targets;
 
 sub apply {
     my ($target)=@_;
@@ -167,8 +221,75 @@ sub apply {
     }
 }
 
-# hmm  how can i apply all of them? wll abort on first error.
+sub apply_targets {
+    while (@targets) {
+	# abort on first error, thus save @targets for --cont in case
+	# we crash
+	savestate \@targets;
+	my $target= shift @targets;
+	apply $target;
+    }
+    savestate [];
+}
 
-apply $_ for @targets;
+
+if ($opt_cont) {
+    @targets= @{ loadstate() };
+    if (@targets) {
+	my $diff= Chj::IO::Command->new_sender("git","diff","HEAD");
+	if (defined (my $firstline = $diff->xreadline)) {
+	    my $target= shift @targets;
+	    my $targetpath= $target->path;
+	    my $oldpatch= xopen_read $targetpath;
+	    my $newpatch= xtmpfile $targetpath;
+	  LOOP: {
+		while (<$oldpatch>) {
+		    ## the following is probably not safe (against
+		    ## such string in commit msg)
+		    if (m{^diff --git a/}) {
+			# finished with old stuff;
+			$newpatch->xprint($firstline);
+			## I've got xsendfile_to but is it buffer safe?
+			while (<$diff>) {
+			    $newpatch->xprint($_);
+			}
+			$oldpatch->xclose;
+			$newpatch->xclose;
+			$newpatch->xputback;
+			last LOOP;
+		    } else {
+			$newpatch->xprint($_);
+		    }
+		}
+		die "got eof without finding a diff in patch file: '$targetpath'";
+	    }
+	    savestate \@targets; #or after commit?
+	    commit "--cont", $target;
+	    reset_hard;
+	    apply $target;
+	    apply_targets;
+	} else {
+	    # --cont but no diff
+	    $diff->xxfinish;
+	    ## hm, just continue applying targets?
+	    ## drop one?
+	    apply_targets;
+	}
+    } else {
+	die "pick --cont: there is nothing left to do.\n";
+    }
+} else {
+    # new run
+
+    # generate patch files (for those where cherry-pick doesn't work
+    # right away), collect in @targets
+    pick $_ for @ARGV;
+
+    # commit patch files
+    commit "pick", @targets
+      if @targets;
+
+    apply_targets;
+}
 
 print "\nOk.\n";
