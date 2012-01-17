@@ -1,14 +1,15 @@
 #!/bin/bash
 
 usage () {
-    echo "$0 base-id basedir"
+    echo "$0 base-id basedir [ end-id ]"
     echo " creates directory basedir, puts patches and _list there,"
     echo " checks them into a repo, and opens _list and a terminal"
     echo " within basedir."
+    echo " end-id is HEAD by default."
     exit 1
 }
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 2 -a $# -ne 3 ]; then
     usage
 fi
 
@@ -18,8 +19,12 @@ fi
 
 set -eu
 
-baseid="$1"
+_baseid="$1"
 basedir="$2"
+_endid="${3-HEAD}"
+
+baseid="$(git rev-parse "$_baseid")"
+endid="$(git rev-parse "$_endid")"
 
 if [ -e "$basedir" ]; then
     echo "'$basedir' already exists"
@@ -41,14 +46,20 @@ tmpdir="tmp-`passwdgen`"
 mkdir "$tmpdir"
 
 cd "$tmpdir"
-git format-patch --thread -M -C "$baseid"..HEAD
+git format-patch --thread -M -C "$baseid".."$endid"
 ls *.patch > _list
 echo "$baseid" > _baseid
 
 cd ..
 mv "$tmpdir" "$basedir"
 
-gdrop -a -m "for basedir '$basedir', baseid '$baseid'" patchtool
+if [ "$baseid" = "`git rev-parse HEAD`" ]; then
+    echo "***NOTE***: not adding tag because baseid is HEAD"
+else
+    gdrop -a -m "for basedir '$basedir', baseid '$baseid', endid '$endid'
+
+(_baseid '$_baseid', _endid '$_endid')" patchtool
+fi
 
 cd "$basedir"
 

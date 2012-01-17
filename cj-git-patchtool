@@ -16,12 +16,15 @@ BASEBASEDIR=PATCHES
 usage () {
     echo "$0 -s|--start baseid"
     echo "  or"
+    echo "$0 -s|--start baseid -e|--end endid"
+    echo "  or"
     echo "$0 --pick"
     echo "  or"
     echo "$0 --resume basedir"
     echo "  start a shell with commands 'app' and 'wig' etc.;"
     echo "  if -s or --start is given, a new basedir (under '$BASEBASEDIR')"
-    echo "  is created and filled;"
+    echo "  is created and filled; if -e or --end is given, the given id is"
+    echo "  used instead of HEAD; "
     echo "  if --pick is given, a new basedir is created but no patches are"
     echo "  put there, just an empty git repo, this is mean for using 'pick'"
     echo "  otherwise expects --resume to use a pre-existing basedir."
@@ -50,17 +53,44 @@ print $m+1, "\n"'`
     CJ_GIT_PATCHTOOL_BASEDIR="$BASEBASEDIR/$hn-$n"
 }
 
+start_new_patch_session () {
+    # start-id, maybe-end-id
+    choose_basedir
+    "$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start \
+	"$1" "$CJ_GIT_PATCHTOOL_BASEDIR" "${2-HEAD}"
+}
 
 if [ $# -eq 2 ]; then
     if [ "$1" = "-s" -o "$1" = "--start" ]; then
-	# start new patch session
-	choose_basedir
-	"$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start \
-	    "$2" "$CJ_GIT_PATCHTOOL_BASEDIR"
+	start_new_patch_session "$2"
     elif [ "$1" = "--resume" ]; then
 	# continue with an existing patch session
 	CJ_GIT_PATCHTOOL_BASEDIR="$2"
     else
+	usage
+    fi
+elif [ $# -eq 4 ]; then
+    # yeah, definitely hacky, anyone for doing proper getopt?
+    if [ "$1" = "-s" -o "$1" = "--start" ]; then
+	startid="$2"
+	if [ "$3" = "-e" -o "$3" = "--end" ]; then
+	    endid="$4"
+	    start_new_patch_session "$startid" "$endid"
+	else
+	    echo "unknown or unexpected option '$3'"
+	    usage
+	fi
+    elif [ "$1" = "-e" -o "$1" = "--end" ]; then
+	endid="$2"
+	if [ "$3" = "-s" -o "$3" = "--start" ]; then
+	    startid="$4"
+	    start_new_patch_session "$startid" "$endid"
+	else
+	    echo "unknown or unexpected option '$3'"
+	    usage
+	fi
+    else
+	echo "unknown or unexpected option '$1'"
 	usage
     fi
 elif [ $# -eq 1 ]; then
