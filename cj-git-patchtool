@@ -29,6 +29,10 @@ usage () {
     echo "  put there, just an empty git repo, this is mean for using 'pick'"
     echo "  otherwise expects --resume to use a pre-existing basedir."
     echo "  Just quit the shell when done."
+    echo
+    echo "  Environment vars: "
+    echo "    GDROP_FORCE=1  force things through even if working directory"
+    echo "                   is not clean (will loose uncommitted changes!)"
     exit 1
 }
 
