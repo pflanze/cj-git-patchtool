@@ -241,12 +241,12 @@ sub xgit_do_hack;
 	my $s=shift;
 	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
 	my $prefix= defined ($$s[Maybe_prefix]) ? $$s[Maybe_prefix] : "";
-	my @leader= grep { $_->is_leader } @{$s->patches};
-	if (@leader==0) {
-	    if ($$s[Message]) {
-		Delay { ["-m", $prefix . $$s[Message] ] }
-		  # Delay just for consistency. so that I can Force it. Since there's no Force-if-promise or so.
-	    } else {
+	if ($$s[Message]) {
+	    Delay { ["-m", $prefix . $$s[Message] ] }
+	      # Delay just for consistency. so that I can Force it. Since there's no Force-if-promise or so.
+	} else {
+	    my @leader= grep { $_->is_leader } @{$s->patches};
+	    if (@leader==0) {
 		if ($s->is_singlepatch) {
 		    if (length $prefix) {
 			use Data::Dumper;
@@ -263,16 +263,15 @@ sub xgit_do_hack;
 		    #todo find something better. right now it's broken as it is not checked in "check" anymore, and on "patch" it will feed that to Force and break this way. !
 		    die $msg
 		}
-	    }
-	} elsif (@leader==1) {
-	    die "Cluster starting at line $$s[Line]: message set both from patch leader and explicitely" if $$s[Message];
-	    if (length $prefix) {
-		Delay { [ "-m",  $prefix . ($leader[0]->get_orig_message) ] }
+	    } elsif (@leader==1) {
+		if (length $prefix) {
+		    Delay { [ "-m",  $prefix . ($leader[0]->get_orig_message) ] }
+		} else {
+		    $leader[0]->message
+		}
 	    } else {
-		$leader[0]->message
+		die "more than one leader patch (for message selection) selected";
 	    }
-	} else {
-	    die "more than one leader patch (for message selection) selected";
 	}
     }
     end Class::Array;
