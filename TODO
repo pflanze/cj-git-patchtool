@@ -1,1 +1,3 @@
 - reuse original author as well, not only time, if it's the same for all patches. right?
+
+- handle CR vs CRLF etc gracefully somehow (repo with CRLF or something gives patches that don't apply)
