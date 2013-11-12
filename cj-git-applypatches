@@ -249,10 +249,7 @@ sub xgit_do_hack;
 	    if (@leader==0) {
 		if ($s->is_singlepatch) {
 		    if (length $prefix) {
-			use Data::Dumper;
-			warn '$$s[Patches]='.Dumper($$s[Patches]);#
 			my $thepatch= $$s[Patches][0];
-			##HELL ($$s[Patches][0]) direkt unten geht nicht. wird das geleert? !
 			Delay { [ "-m",  $prefix . ($thepatch->get_orig_message) ] }
 		    } else {
 			undef
