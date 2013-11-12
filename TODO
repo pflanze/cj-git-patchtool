@@ -6,3 +6,7 @@
   (i.e. a patch creates new files, and has some conflict in a change
   to an existing file; wig will update the change to an existing file,
   but ditch the newly created files. fix that.)
+
+[- would it be possible to handle merge commits usefully? i.e. reuse
+  conflict merges that might already have been solved there.]
+
