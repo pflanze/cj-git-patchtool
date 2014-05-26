@@ -10,3 +10,6 @@
 [- would it be possible to handle merge commits usefully? i.e. reuse
   conflict merges that might already have been solved there.]
 
+- "git am" fails with 'Patch does not have a valid e-mail address.' if
+  the commit message body has a line that starts with 'from:'
+
