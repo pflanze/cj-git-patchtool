@@ -125,3 +125,8 @@ TIPS:
 
 use the "dupa" tool from chj-bin.git for duplicating patches (for
 splitting them)
+
+use the "cj-git-filter-branch--add-emptytail" tool from the same place
+if you want to modify the initial commit in a repository (it grafts a
+temporary empty commit to the tail.)
+
