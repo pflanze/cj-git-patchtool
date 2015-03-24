@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cat <<'EOF'
+
+Overview:
+
+  cj-git-patchtool --help
+  app
+  wig
+  dupa
+
+for more detailed information:
+
+  readme
+
+EOF
