@@ -1,12 +1,12 @@
 cj-git-patchtool is a tool to edit the history of a Git repository.
 
-In that regard it is similar to "git rebase -i"; but unlike it, with
+In that regard it is similar to `git rebase -i`; but unlike it, with
 cj-git-patchtool you edit the history in a file that persists across
 modification runs, so you can do changes successively without risk of
 loosing your editing work. But not only the history is kept in a file,
 but the patches as well: this allows to edit individual patches
-persistently, too. There's also a tool included called "wig" which
-uses "wiggle" to try to resolve conflicts that can arise from history
+persistently, too. There's also a tool included called `wig` which
+uses `wiggle` to try to resolve conflicts that can arise from history
 changes; and it saves the resolutions back into the patch files,
 too. So, it always gives you access to the state in the form of disk
 files, and you can change it and re-"run" the modifications until
@@ -88,7 +88,7 @@ multiple lines are possible
 
 * any line that start with "#" is ignored
 
-(I suggest you run "gitk &" and step through the history to see the
+(I suggest you run `gitk &` and step through the history to see the
 full commit messages and diffs easily while editing _list.)
 
 If you want to apply the changed history, go to the terminal where you
@@ -105,9 +105,9 @@ end. Otherwise, fix your _list, or if it's a conflict, try:
 
 $ wig patchfilename  # only the filename, not the full path
 
-This will run "wiggle" and if it worked, will save the resolved diff
-back to the patch file so that you don't have to run "wig" in
-subsequent "app" runs.
+This will run `wiggle` and if it worked, will save the resolved diff
+back to the patch file so that you don't have to run `wig` in
+subsequent `app` runs.
 
 If you're done, just close the editor buffer, exit the terminal with
 the state files, and exit the subshell (hit ctl-d).
@@ -123,10 +123,10 @@ _list file and terminal with the state directory manually.)
 TIPS:
 ====
 
-use the "dupa" tool from chj-bin.git for duplicating patches (for
+use the `dupa` tool from chj-bin.git for duplicating patches (for
 splitting them)
 
-use the "cj-git-filter-branch--add-emptytail" tool from the same place
+use the `cj-git-filter-branch--add-emptytail` tool from the same place
 if you want to modify the initial commit in a repository (it grafts a
 temporary empty commit to the tail.)
 
