@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=
+# remember, *still* need to quote variables!
+
+usage () {
+    echo "usage: $0"
+    echo '  print a commit id of a commit (with current commit/author time)'
+    echo '  referencing an empty tree. Use with e.g. `cj-git-graftwrite`.'
+    exit 1
+}
+
+if [ $# -ne 0 ]; then
+    usage;
+fi
+
+nulltree=`git mktree < /dev/null`
+
+git commit-tree "$nulltree" -m null < /dev/null
+
