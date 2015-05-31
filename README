@@ -130,5 +130,8 @@ use the `cj-git-filter-branch--add-emptytail` tool from the same place
 if you want to modify the initial commit in a repository (it grafts a
 temporary empty commit to the tail.)
 
+You could use the `cj-git-graftwrite` tool from the same place to
+change the grafts file (somewhat) more easily.
+
 When in the cj-git-patchtool shell context, `help-cj-git-patchtool`
 will show a synopsis of the usage.
