@@ -131,7 +131,10 @@ if you want to modify the initial commit in a repository (it grafts a
 temporary empty commit to the tail.)
 
 You could use the `cj-git-graftwrite` tool from the same place to
-change the grafts file (somewhat) more easily.
+change the grafts file (somewhat) more easily. If you need to work up
+to the very first commit in the history, it may be useful to prefix
+the history with a commit with an empty tree, which can be created
+with `cj-git-null`.
 
 When in the cj-git-patchtool shell context, `help-cj-git-patchtool`
 will show a synopsis of the usage.
