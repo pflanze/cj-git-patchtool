@@ -46,11 +46,12 @@ Git repository whose history you want to change, and check out the
 branch that you want to change, with HEAD being the last commit of the
 history that you want to edit.
 
-If you run this tool the first time:
+If you run this tool the first time, from within the working directory
+of the repository that you want to change:
 
-$ mkdir PATCHES
-$ git config --global core.excludesfile ~/.gitignore_global
-$ echo /PATCHES/ >> ~/.gitignore_global
+ $ mkdir PATCHES
+ $ git config --global core.excludesfile ~/.gitignore_global
+ $ echo /PATCHES/ >> ~/.gitignore_global
 
 Find the commit before the oldest commit you want to edit, then run
 (-s and --start are equivalent):
