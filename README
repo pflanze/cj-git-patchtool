@@ -2,17 +2,17 @@ cj-git-patchtool is a tool to edit the history of a Git repository.
 
 In that regard it is similar to `git rebase -i`; but unlike it, with
 cj-git-patchtool you edit the history in a file that persists across
-modification runs, so you can do changes successively without risk of
-loosing your editing work. But not only the history is kept in a file,
-but the patches as well: this allows to edit individual patches
-persistently, too. There's also a tool included called `wig` which
-uses `wiggle` to try to resolve conflicts that can arise from history
-changes; and it saves the resolutions back into the patch files,
-too. So, it always gives you access to the state in the form of disk
-files, and you can change it and re-"run" the modifications until
-you're done. It even checks the files into a new Git repository on its
-own, so that you can commit your changes to the state if you want, to
-keep a history of your history editing work :).
+modification runs, so you can modify your changes incrementally
+without risk of loosing your editing work. But not only the history is
+kept in a file, but the patches as well: this allows to edit
+individual patches persistently, too. There's also a tool included
+called `wig` which uses `wiggle` to try to resolve conflicts that can
+arise from history changes; and it saves the resolutions back into the
+patch files, too. So, it always gives you access to the state in the
+form of disk files, and you can change it and re-"run" the
+modifications until you're done. It even checks the files into a new
+Git repository on its own, so that you can commit your changes to the
+state if you want, to keep a history of your history editing work :).
 
 
 INSTALLATION:
@@ -68,7 +68,7 @@ checked in (in case you want to commit your editing work).
 
 Now edit the _list, adhering to these rules:
 
-* patches on subsequent lines are squashed. put an empty line between
+* Patches on subsequent lines are squashed. Put an empty line between
   each patch or group of patches that should become a new commit.
 
 * Within each group, either put a star "*" at beginning of a line to
@@ -86,7 +86,7 @@ multiple lines are possible
   starting with "prefix: " and then a string; the string will be
   prepended to the commit message.
 
-* any line that start with "#" is ignored
+* Any line that start with "#" is ignored.
 
 (I suggest you run `gitk &` and step through the history to see the
 full commit messages and diffs easily while editing _list.)
