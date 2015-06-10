@@ -18,15 +18,14 @@ state if you want, to keep a history of your history editing work :).
 INSTALLATION:
 ============
 
-* install chj-bin, chj-perllib and Class-Array:
+* install chj-bin and chj-perllib:
 
    # cd /opt; mkdir chj; cd chj
    # git clone https://github.com/pflanze/chj-perllib.git perllib
    # git clone https://github.com/pflanze/chj-bin.git bin
-   # git clone https://github.com/pflanze/Class-Array.git
-   # mkdir /usr/local/lib/site_perl/ # if it doesn't exist already
+   # mkdir -p /usr/local/lib/site_perl/Class
    # ln -s /opt/chj/perllib/Chj /usr/local/lib/site_perl/
-   # ln -s /opt/chj/Class-Array /usr/local/lib/site_perl/Class
+   # ln -s /opt/chj/perllib/Class/Array.pm /usr/local/lib/site_perl/Class
 
   and add /opt/chj/bin to your PATH (through your .bash_profile or
   similar)
