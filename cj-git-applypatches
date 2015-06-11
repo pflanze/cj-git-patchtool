@@ -94,6 +94,11 @@ sub xgit_do_hack;
 	bless [@_],$cl
     }
 
+    sub desc {
+	my $s=shift;
+	$s->filename
+    }
+
     sub path {
 	my $s=shift;
 	"$$s[Basedir]/$$s[Filename]"
@@ -189,6 +194,8 @@ sub xgit_do_hack;
 
 {
     package Command;
+    use Chj::xperlfunc 'xxsystem';
+
     use Class::Array -class=> 'ClusterItem', -extend=> -publica=>
       ('commandline');
 
@@ -199,6 +206,17 @@ sub xgit_do_hack;
 	@_==1 or die "wrong number of arguments";
 	bless [@_],$cl
     }
+
+    sub desc {
+	my $s=shift;
+	'% ' . $s->commandline
+    }
+
+    sub apply {
+	my $s=shift;
+	xxsystem $s->commandline;
+    }
+
     end Class::Array;
 }
 
@@ -447,7 +465,7 @@ sub apply {
     for my $c (@clusters) {
 	my $applypatches=sub {
 	    for my $p (@{$c->items}) {
-		print "==== ".$p->filename." ====\n";
+		print "==== ".$p->desc." ====\n";
 		$p->apply;
 	    }
 	};
@@ -458,13 +476,7 @@ sub apply {
 	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
 	    main::xgit_do_hack "commit", @{Force $msgoptions};
 	} else {
-	    if ($c->is_singlepatch) {
-		&$applypatches
-	    } else {
-		# cluster with only '%' directive, no message nor
-		# patch
-		()
-	    }
+	    &$applypatches
 	}
     }
 }
