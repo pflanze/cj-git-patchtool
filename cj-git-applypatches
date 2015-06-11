@@ -382,17 +382,16 @@ sub apply {
 		$p->apply;
 	    }
 	};
-	my $msgoptions= $c->maybe_message_promise;
-	if (not $msgoptions) {
-	    $c->is_singlepatch
-	      or die "???can only happen with singlepatches right?";
-	    &$applypatches
-	} else {
+	if (my $msgoptions= $c->maybe_message_promise) {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
 	    main::xgit_do_hack "reset", "--soft", $oldhead;
 	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
 	    main::xgit_do_hack "commit", @{Force $msgoptions};
+	} else {
+	    $c->is_singlepatch
+	      or die "???can only happen with singlepatches right?";
+	    &$applypatches
 	}
     }
 }
