@@ -244,7 +244,7 @@ sub xgit_do_hack;
     }
 
     use Chj::FP::lazy;
-    sub maybe_message_promise {
+    sub maybe_msgoptions_promise {
 	# either false if message does not need to be changed,
 	# or a promise of an array of options to be fed to git.
 	my $s=shift;
@@ -382,7 +382,7 @@ sub apply {
 		$p->apply;
 	    }
 	};
-	if (my $msgoptions= $c->maybe_message_promise) {
+	if (my $msgoptions= $c->maybe_msgoptions_promise) {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
 	    main::xgit_do_hack "reset", "--soft", $oldhead;
