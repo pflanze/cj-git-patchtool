@@ -224,6 +224,18 @@ sub xgit_do_hack;
 	@{$$s[Patches]}==1
     }
 
+    sub perhaps_leader {
+	# incl. sanitation, i.e. throws exception if more than one
+	# leader is present
+	my $s=shift;
+	my @leaders= grep { $_->is_leader } @{$s->patches};
+	@leaders==1 ? $leaders[0]
+	  : @leaders ?
+	    die "more than one leader patch (for message selection)".
+	      " selected"
+		: ();
+    }
+
     use Date::Parse ();
     sub author_date {
 	my $s=shift;
@@ -256,8 +268,16 @@ sub xgit_do_hack;
 	      # Delay just for consistency, so that I can Force
 	      # it. (Should use FP::Lazy instead or so)
 	} else {
-	    my @leader= grep { $_->is_leader } @{$s->patches};
-	    if (@leader==0) {
+	    if (my ($leader)= $s->perhaps_leader) {
+		if (length $prefix) {
+		    Delay {
+			[ "-m",
+			  $prefix . ($leader->get_orig_message) ]
+		    }
+		} else {
+		    $leader->message
+		}
+	    } else {
 		if ($s->is_singlepatch) {
 		    if (length $prefix) {
 			my $thepatch= $$s[Patches][0];
@@ -279,18 +299,6 @@ sub xgit_do_hack;
 
 		    die $msg
 		}
-	    } elsif (@leader==1) {
-		if (length $prefix) {
-		    Delay {
-			[ "-m",
-			  $prefix . ($leader[0]->get_orig_message) ]
-		    }
-		} else {
-		    $leader[0]->message
-		}
-	    } else {
-		die "more than one leader patch (for message selection)".
-		  " selected";
 	    }
 	}
     }
