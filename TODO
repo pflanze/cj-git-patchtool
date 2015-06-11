@@ -17,6 +17,8 @@
   (not so simple, will have to parse patch file to know which paths
   are modified? Or can we rely on $rejfile ?)
 
+- test suite
+
 - port `cj-git-applypatches` to using functional-perl (and make it an
   example?)
 
