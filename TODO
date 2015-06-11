@@ -14,3 +14,7 @@
   the commit message body has a line that starts with 'from:'
 
 - 'wig' removes the executable flag from files, fix that
+
+- port `cj-git-applypatches` to using functional-perl (and make it an
+  example?)
+
