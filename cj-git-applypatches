@@ -474,7 +474,7 @@ sub apply {
 	    &$applypatches;
 	    main::xgit_do_hack "reset", "--soft", $oldhead;
 	    my $commit= sub {
-		main::xgit_do_hack "commit", @{Force $msgoptions};
+		main::xgit_do_hack "commit", "-a", @{Force $msgoptions};
 	    };
 	    if (my ($author_date)= $c->perhaps_author_date) {
 		local $ENV{GIT_AUTHOR_DATE}= $author_date;
