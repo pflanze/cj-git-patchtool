@@ -308,6 +308,12 @@ our $listfh= xopen_read $listfile;
 our @clusters;
 my $line=1;
 our $curcluster= new Cluster ($line);
+
+sub end_cluster {
+    push @clusters, $curcluster
+      unless $curcluster->is_empty;
+}
+
 while (<$listfh>) {
     chomp;
     $line++;
@@ -318,8 +324,7 @@ while (<$listfh>) {
 	$curcluster->add_patch(Patch->new($basedir,$path,$is_leader));
     } elsif (/^\s*$/) {
 	# a new cluster.
-	push @clusters, $curcluster
-	  unless $curcluster->is_empty;
+	end_cluster;
 	$curcluster= new Cluster ($line);
     } elsif (/^(\d+)$/) {
 	my $path=$1;
@@ -350,8 +355,7 @@ while (<$listfh>) {
 	die "no match for '$_'";
     }
 }
-push @clusters, $curcluster
-  unless $curcluster->is_empty;
+end_cluster;
 $listfh->xclose;
 
 sub check {
