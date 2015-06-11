@@ -367,13 +367,6 @@ sub check {
 		$errs++;
 	    };
 	}
-# 	my $m= $c->maybe_message_promise;
-# 	#if (my @e= grep { UNIVERSAL::isa($_,"_Error") } @m) {
-# 	print $_->string,"\n"
-# 	  for (grep { if (UNIVERSAL::isa($_,"_MissingCommitidError")) { 0 } else { $errs++; 1 } }
-# 	       grep { UNIVERSAL::isa($_,"_Error") } ($m ? Force $m : ()));
-#^can't fix. I mean,   somehowrong ach hell TODO.  darf nicht forcen. will ja  auch nur Error wissen. wann aber der ? kann nid wissen ob es nur  commitid fehlt   derzeit. still too intertwined   also das Delay um intertwining zu retten ist also ne doofe idee rite.
-#BAD. weil reason for check really genau das hier war.
     }
     $errs
 }
