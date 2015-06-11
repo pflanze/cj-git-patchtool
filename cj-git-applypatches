@@ -78,47 +78,49 @@ sub xgit_do_hack;
        'is_leader', # giving the message.
        'commitid', # set-once.
       );
-    #as alwaysstillmissingthenewgell.
+
     sub new {
 	my $cl=shift;
 	bless [@_],$cl
     }
+
     sub path {
 	my $s=shift;
 	"$$s[Basedir]/$$s[Filename]"
     }
-    #so wie bei  schm  missing das manual jus override von accessoren  ?..  wl  ~.
+
     sub set_commitid {
 	my $s=shift;
 	my ($commitid)=@_;
-	die "commitid already set" if $$s[Commitid];
+	die "commitid already set"
+	  if $$s[Commitid];
 	$$s[Commitid]=$commitid
     }
+
     use Chj::FP::lazy;
     sub message {
 	my $s=shift;
-	# hm. von patch file hm. extrahieren doch doof?  hm. eben formulieren dings, anweisung, wie das von git dann -c so nimmt gell  hm  muss id kennen hmmmm.
-	# AH  aus file die commitid extrahieren ichdep gell?wollteich. jaklar geht eh nid per neuer commidid weil die eben message nid hat--ehr zwar dochschon.und actually jene von file. hm back, doch wie geplant.
 	Delay {
 	    if ($$s[Commitid]) {
-		[ "-C",$$s[Commitid] ] # to be added to git commit for the cluster
+		# to be added to git commit for the cluster
+		[ "-C",$$s[Commitid] ]
 	    } else {
 		my $msg= "missing commitid for patchfile $$s[Filename]";
 		if ($opt_dry) {
 		    _MissingCommitidError->new($msg)
 		} else {
-		    # would fail too but  only after giving the stringified representation to git ya know
+		    # would fail too but only after giving the
+		    # stringified representation to git
 		    die $msg
 		}
 	    }
 	}
     }
+
     sub get_orig_message {
 	my $s=shift;
 	# read message from original commit
-	## eh aber will ich wirklich orig???  war bisherso? CHR?? also auch nun rit.
 	if (my $id= $$s[Commitid]) {
-	    # also. nowhow.
 	    use Chj::Git::Functions;
 	    my $rf= Chj::Git::Functions::maybe_cat_file("commit",$id)
 	      or die "could not get commit message for '$id'";
@@ -126,17 +128,17 @@ sub xgit_do_hack;
 	      or die "cannot match to strip headers from '$$rf'";
 	    $$rf
 	} else {
-	    ##ugh wieder? noetig?
 	    my $msg= "missing commitid for patchfile $$s[Filename]";
 	    if ($opt_dry) {
-		## hum in context that expects message string? How did I mean this? Is it overloaded?
 		_MissingCommitidError->new($msg)
 	    } else {
-		# would fail too but  only after giving the stringified representation to git ya know
+		# would fail too but only after giving the stringified
+		# representation to git
 		die $msg
 	    }
 	}
     }
+
     sub author_date {
 	my $s=shift;
 	#---
@@ -159,9 +161,11 @@ sub xgit_do_hack;
 	}
 	$f->xclose;
 	#---
-	@{$$headers{date}||[]}==1 or die "doesn't contain exactly one 'date' header: ".$s->path;
+	@{$$headers{date}||[]}==1
+	  or die "doesn't contain exactly one 'date' header: ".$s->path;
 	$$headers{date}[0]
     }
+
     use Chj::Git::Functions;
     sub apply {
 	my $s=shift;
@@ -180,42 +184,46 @@ sub xgit_do_hack;
       (
        'line', #of the start, in source file.
        'message', # string
-       #'lead', # path
-       #'squashes', # @ of additional patches.
-       #ehr. no need for distinction right.
        'patches', # paths
        'maybe_prefix', # undef or string to be prepended to commit message
       );
+
     sub new {
 	my $cl=shift;
 	my ($line)=@_;
 	my $s=$cl->SUPER::new;
 	$$s[Line]=$line;
-	$$s[Patches]=[]; #to avoid "Can't use an undefined value as an ARRAY reference" in is_empty, wow old horridity
+	$$s[Patches]=[];
 	$s
     }
+
     sub set_message_from_path {
 	my $s=shift;
 	@_==1 or die;
 	my ($path)=@_;
-	die "message already set" if $$s[Message];
+	die "message already set"
+	  if $$s[Message];
 	use Chj::xopen 'xopen_read';
 	my $f=xopen_read $path;
 	$$s[Message]= $f->xcontent;
 	$f->xclose;
     }
+
     sub add_patch {
 	my $s=shift;
 	push @{$$s[Patches]},@_
     }
+
     sub is_empty {
 	my $s=shift;
 	not @{$$s[Patches]}
     }
+
     sub is_singlepatch {
 	my $s=shift;
 	@{$$s[Patches]}==1
     }
+
     use Date::Parse ();
     sub author_date {
 	my $s=shift;
@@ -223,54 +231,70 @@ sub xgit_do_hack;
 	# select the *latest* author_date of all patches.
 	my @p= map {
 	    [
-	     ((scalar Date::Parse::str2time($_))||die "invalid time?: '$_'"),
+	     ((scalar Date::Parse::str2time($_))
+	      || die "invalid time?: '$_'"),
 	     $_
 	    ]
 	} map {
 	    $_->author_date
 	} @{$s->patches};
-	# now sort it? or  anyway  jus us sort dumbi
 	(sort {
 	    $$a[0] cmp $$b[0]
 	} @p)[-1][1]
     }
+
     use Chj::FP::lazy;
     sub maybe_message_promise {
 	# either false if message does not need to be changed,
 	# or a promise of an array of options to be fed to git.
 	my $s=shift;
-	@{$$s[Patches]} >= 1 or die "message message invalid if no patches exist in cluster";
+	@{$$s[Patches]} >= 1
+	  or die "message message invalid if no patches exist in cluster";
 	my $prefix= defined ($$s[Maybe_prefix]) ? $$s[Maybe_prefix] : "";
 	if ($$s[Message]) {
 	    Delay { ["-m", $prefix . $$s[Message] ] }
-	      # Delay just for consistency. so that I can Force it. Since there's no Force-if-promise or so.
+	      # Delay just for consistency, so that I can Force
+	      # it. (Should use FP::Lazy instead or so)
 	} else {
 	    my @leader= grep { $_->is_leader } @{$s->patches};
 	    if (@leader==0) {
 		if ($s->is_singlepatch) {
 		    if (length $prefix) {
 			my $thepatch= $$s[Patches][0];
-			Delay { [ "-m",  $prefix . ($thepatch->get_orig_message) ] }
+			Delay {
+			    [ "-m",
+			      $prefix . ($thepatch->get_orig_message) ]
+			}
 		    } else {
 			undef
 		    }
 		} else {
-		    my $msg="Cluster starting at line $$s[Line]: neither patch leader nor explicit message given";
+		    my $msg="Cluster starting at line $$s[Line]: ".
+		      "neither patch leader nor explicit message given";
 		    #new _NoCommitmsgError ;
-		    #todo find something better. right now it's broken as it is not checked in "check" anymore, and on "patch" it will feed that to Force and break this way. !
+		    # XX find something better. right now it's broken
+		    # as it is not checked in "check" anymore, and on
+		    # "patch" it will feed that to Force and break
+		    # this way. !
+
 		    die $msg
 		}
 	    } elsif (@leader==1) {
 		if (length $prefix) {
-		    Delay { [ "-m",  $prefix . ($leader[0]->get_orig_message) ] }
+		    Delay {
+			[ "-m",
+			  $prefix . ($leader[0]->get_orig_message) ]
+		    }
 		} else {
 		    $leader[0]->message
 		}
 	    } else {
-		die "more than one leader patch (for message selection) selected";
+		die "more than one leader patch (for message selection)".
+		  " selected";
 	    }
 	}
     }
+
     end Class::Array;
 }
 
@@ -294,7 +318,8 @@ while (<$listfh>) {
 	$curcluster->add_patch(Patch->new($basedir,$path,$is_leader));
     } elsif (/^\s*$/) {
 	# a new cluster.
-	push @clusters, $curcluster unless $curcluster->is_empty;
+	push @clusters, $curcluster
+	  unless $curcluster->is_empty;
 	$curcluster= new Cluster ($line);
     } elsif (/^(\d+)$/) {
 	my $path=$1;
@@ -319,18 +344,20 @@ while (<$listfh>) {
 	    }
 	    push @c, $_
 	}
-	$curcluster->set_message(join ("\n", map { my $s=$_; $s=~ s/\s+\z//; $s } @c));
+	$curcluster->set_message
+	  (join ("\n", map { my $s=$_; $s=~ s/\s+\z//; $s } @c));
     } else {
 	die "no match for '$_'";
     }
 }
-push @clusters, $curcluster unless $curcluster->is_empty;
+push @clusters, $curcluster
+  unless $curcluster->is_empty;
 $listfh->xclose;
 
 sub check {
     my $errs=0;
     for my $c (@clusters) {
-	#ugly copy stuf. from apply.
+	# ugly COPY from apply.
 	for my $p (@{$c->patches}) {
 	    #$p->apply($basedir);
 	    #now we calculate paths anyway ourselves?? ~td:
@@ -364,7 +391,8 @@ sub apply {
 	};
 	my $msgoptions= $c->maybe_message_promise;
 	if (not $msgoptions) {
-	    $c->is_singlepatch or die "???can only happen with singlepatches right?";
+	    $c->is_singlepatch
+	      or die "???can only happen with singlepatches right?";
 	    &$applypatches
 	} else {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
@@ -378,20 +406,20 @@ sub apply {
 
 
 my $errors= check;
-#my or our"?".
-#f
 
 if ($errors) {
     print "$errors errors in input file, stopping.\n";
     exit 1;
 } else {
     if ($opt_dry) {
-	print "no errors in input file; not running because in dry-run mode.\n";
+	print "no errors in input file; ".
+	  "not running because in dry-run mode.\n";
     } else {
 	apply;
 	print "Ok.\n";
     }
 }
+
 #use Chj::ruse;
 use Chj::Backtrace;
 #use Chj::repl; repl;
