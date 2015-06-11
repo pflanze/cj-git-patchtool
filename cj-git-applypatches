@@ -70,14 +70,23 @@ sub xgit_do_hack;
    });
 
 {
-    package Patch;
+    package ClusterItem;
     use Class::Array -fields=> -publica=>
+      ();
+    sub is_patch { 0 }
+    end Class::Array;
+}
+
+{
+    package Patch;
+    use Class::Array -class=> 'ClusterItem', -extend=> -publica=>
       (
        'basedir',
        'filename',
        'is_leader', # giving the message.
        'commitid', # set-once.
       );
+    sub is_patch { 1 }
 
     sub new {
 	my $cl=shift;
@@ -177,6 +186,18 @@ sub xgit_do_hack;
     end Class::Array;
 }
 
+{
+    package Command;
+    use Class::Array -class=> 'ClusterItem', -extend=> -publica=>
+      ('commandline');
+    sub new {
+	my $cl=shift;
+	@_==1 or die "wrong number of arguments";
+	bless [@_],$cl
+    }
+    end Class::Array;
+}
+
 
 {
     package Cluster;
@@ -184,8 +205,9 @@ sub xgit_do_hack;
       (
        'line', #of the start, in source file.
        'message', # string
-       'patches', # paths
+       'items', # array_of ClusterItem
        'maybe_prefix', # undef or string to be prepended to commit message
+       '_patches', # cache of items that are patches (premature opt?)
       );
 
     sub new {
@@ -193,7 +215,7 @@ sub xgit_do_hack;
 	my ($line)=@_;
 	my $s=$cl->SUPER::new;
 	$$s[Line]=$line;
-	$$s[Patches]=[];
+	$$s[Items]=[];
 	$s
     }
 
@@ -209,19 +231,32 @@ sub xgit_do_hack;
 	$f->xclose;
     }
 
-    sub add_patch {
+    sub add_item {
 	my $s=shift;
-	push @{$$s[Patches]},@_
+	undef $$s[_Patches];
+	push @{$$s[Items]},@_
     }
 
-    sub is_empty {
+    sub patches {
 	my $s=shift;
-	not @{$$s[Patches]}
+	$$s[_Patches] ||=
+	  [ grep { $_->is_patch } @{$$s[Items]} ];
+    }
+
+    sub has_patches {
+	my $s=shift;
+	@{ $s->patches } > 0
     }
 
     sub is_singlepatch {
 	my $s=shift;
-	@{$$s[Patches]}==1
+	@{ $s->patches } == 1
+    }
+
+    sub is_empty { # really empty (nothing to apply to history),
+                   # regardless of kind of item
+	my $s=shift;
+	not @{$$s[Items]}
     }
 
     sub perhaps_leader {
@@ -239,7 +274,8 @@ sub xgit_do_hack;
     use Date::Parse ();
     sub author_date {
 	my $s=shift;
-	die "empty" if $s->is_empty;
+	die "cluster does not have patches"
+	  unless $s->has_patches;
 	# select the *latest* author_date of all patches.
 	my @p= map {
 	    [
@@ -260,8 +296,6 @@ sub xgit_do_hack;
 	# either false if message does not need to be changed,
 	# or a promise of an array of options to be fed to git.
 	my $s=shift;
-	@{$$s[Patches]} >= 1
-	  or die "message message invalid if no patches exist in cluster";
 	my $prefix= defined ($$s[Maybe_prefix]) ? $$s[Maybe_prefix] : "";
 	if ($$s[Message]) {
 	    Delay { ["-m", $prefix . $$s[Message] ] }
@@ -280,7 +314,7 @@ sub xgit_do_hack;
 	    } else {
 		if ($s->is_singlepatch) {
 		    if (length $prefix) {
-			my $thepatch= $$s[Patches][0];
+			my $thepatch= $s->patches->[0];
 			Delay {
 			    [ "-m",
 			      $prefix . ($thepatch->get_orig_message) ]
@@ -288,9 +322,12 @@ sub xgit_do_hack;
 		    } else {
 			undef
 		    }
+		} elsif (not $s->has_patches) {
+		    undef
 		} else {
 		    my $msg="Cluster starting at line $$s[Line]: ".
-		      "neither patch leader nor explicit message given";
+		      "neither leader patch indication nor ".
+			"explicit message given";
 		    #new _NoCommitmsgError ;
 		    # XX find something better. right now it's broken
 		    # as it is not checked in "check" anymore, and on
@@ -305,6 +342,7 @@ sub xgit_do_hack;
 
     end Class::Array;
 }
+
 
 use Chj::xperlfunc 'dirname';
 our $basedir= dirname $listfile;
@@ -329,7 +367,10 @@ while (<$listfh>) {
     if (/^(\*?)(\d+(?:\w+)?-.+)/) {
 	my ($is_leader,$path)=($1,$2);
 	# a squash. extend existing cluster.
-	$curcluster->add_patch(Patch->new($basedir,$path,$is_leader));
+	$curcluster->add_item (Patch->new ($basedir,$path,$is_leader));
+    } elsif (/^\%\s*(.*?)\s*$/s) {
+	# a shell command
+	$curcluster->add_item (Command->new ($1));
     } elsif (/^\s*$/) {
 	# a new cluster.
 	end_cluster;
@@ -389,7 +430,7 @@ use Chj::FP::lazy;
 sub apply {
     for my $c (@clusters) {
 	my $applypatches=sub {
-	    for my $p (@{$c->patches}) {
+	    for my $p (@{$c->items}) {
 		print "==== ".$p->filename." ====\n";
 		$p->apply;
 	    }
@@ -401,9 +442,13 @@ sub apply {
 	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
 	    main::xgit_do_hack "commit", @{Force $msgoptions};
 	} else {
-	    $c->is_singlepatch
-	      or die "???can only happen with singlepatches right?";
-	    &$applypatches
+	    if ($c->is_singlepatch) {
+		&$applypatches
+	    } else {
+		# cluster with only '%' directive, no message nor
+		# patch
+		()
+	    }
 	}
     }
 }

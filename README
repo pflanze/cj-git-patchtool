@@ -86,6 +86,17 @@ multiple lines are possible
   starting with "prefix: " and then a string; the string will be
   prepended to the commit message.
 
+* A line that starts with "%" is taken to be a shell script to run at
+  that point during application of the patch series.
+
+  For example '% bash' will run a subshell, which gives you the
+  possibility to access the working directory of the partially applied
+  history interactively. Or, '% make test' might run your test suite,
+  etc.
+
+  If the script fails (does not exit 0), patch application is
+  aborted.
+
 * Any line that start with "#" is ignored.
 
 (I suggest you run `gitk &` and step through the history to see the
