@@ -74,6 +74,7 @@ sub xgit_do_hack;
     use Class::Array -fields=> -publica=>
       ();
     sub is_patch { 0 }
+    sub is_command { 0 }
     end Class::Array;
 }
 
@@ -190,6 +191,9 @@ sub xgit_do_hack;
     package Command;
     use Class::Array -class=> 'ClusterItem', -extend=> -publica=>
       ('commandline');
+
+    sub is_command { 1 }
+
     sub new {
 	my $cl=shift;
 	@_==1 or die "wrong number of arguments";
@@ -208,6 +212,7 @@ sub xgit_do_hack;
        'items', # array_of ClusterItem
        'maybe_prefix', # undef or string to be prepended to commit message
        '_patches', # cache of items that are patches (premature opt?)
+       '_commands', # dito
       );
 
     sub new {
@@ -246,6 +251,17 @@ sub xgit_do_hack;
     sub has_patches {
 	my $s=shift;
 	@{ $s->patches } > 0
+    }
+
+    sub commands {
+	my $s=shift;
+	$$s[_Commands] ||=
+	  [ grep { $_->is_command } @{$$s[Items]} ];
+    }
+
+    sub has_commands {
+	my $s=shift;
+	@{ $s->commands } > 0
     }
 
     sub is_singlepatch {
