@@ -14,6 +14,8 @@
   the commit message body has a line that starts with 'from:'
 
 - 'wig' removes the executable flag from files, fix that
+  (not so simple, will have to parse patch file to know which paths
+  are modified? Or can we rely on $rejfile ?)
 
 - port `cj-git-applypatches` to using functional-perl (and make it an
   example?)
