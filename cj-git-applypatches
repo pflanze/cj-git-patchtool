@@ -307,9 +307,9 @@ sub xgit_do_hack;
     }
 
     use Date::Parse ();
-    sub author_date {
+    sub perhaps_author_date { # in which format?
 	my $s=shift;
-	die "cluster does not have patches"
+	return ()
 	  unless $s->has_patches;
 	# select the *latest* author_date of all patches.
 	my @p= map {
@@ -473,8 +473,16 @@ sub apply {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
 	    main::xgit_do_hack "reset", "--soft", $oldhead;
-	    local $ENV{GIT_AUTHOR_DATE}= $c->author_date;
-	    main::xgit_do_hack "commit", @{Force $msgoptions};
+	    my $commit= sub {
+		main::xgit_do_hack "commit", @{Force $msgoptions};
+	    };
+	    if (my ($author_date)= $c->perhaps_author_date) {
+		local $ENV{GIT_AUTHOR_DATE}= $author_date;
+		&$commit
+	    } else {
+		# '%' command only, no patches
+		&$commit;
+	    }
 	} else {
 	    &$applypatches
 	}
