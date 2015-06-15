@@ -84,7 +84,8 @@ sub xgit_do_hack;
       (
        'basedir',
        'filename',
-       'is_leader', # giving the message.
+       'is_message_leader', # giving the message.
+       'is_time_leader', # giving the author time.
        'commitid', # set-once.
       );
     sub is_patch { 1 }
@@ -294,36 +295,40 @@ sub xgit_do_hack;
 	not @{$$s[Items]}
     }
 
-    sub perhaps_leader {
+    sub perhaps_the {
 	# incl. sanitation, i.e. throws exception if more than one
 	# leader is present
 	my $s=shift;
-	my @leaders= grep { $_->is_leader } @{$s->patches};
+	my ($method)=@_;
+	my @leaders= grep { $_->$method } @{$s->patches};
 	@leaders==1 ? $leaders[0]
 	  : @leaders ?
-	    die "more than one leader patch (for message selection)".
-	      " selected"
-		: ();
+	    die "more than one $method patch selected"
+	      : ();
     }
 
     use Date::Parse ();
-    sub perhaps_author_date { # in which format?
+    sub perhaps_author_date { # -> perhaps (git time format)
 	my $s=shift;
 	return ()
 	  unless $s->has_patches;
-	# select the *latest* author_date of all patches.
-	my @p= map {
-	    [
-	     ((scalar Date::Parse::str2time($_))
-	      || die "invalid time?: '$_'"),
-	     $_
-	    ]
-	} map {
-	    $_->author_date
-	} @{$s->patches};
-	(sort {
-	    $$a[0] cmp $$b[0]
-	} @p)[-1][1]
+	if (my ($leader)= $s->perhaps_the ("is_time_leader")) {
+	    $leader->author_date
+	} else {
+	    # select the *latest* author_date of all patches.
+	    my @p= map {
+		[
+		 ((scalar Date::Parse::str2time($_))
+		  || die "invalid time?: '$_'"),
+		 $_
+		]
+	    } map {
+		$_->author_date
+	    } @{$s->patches};
+	    (sort {
+		$$a[0] cmp $$b[0]
+	    } @p)[-1][1]
+	}
     }
 
     use Chj::FP::lazy;
@@ -337,7 +342,7 @@ sub xgit_do_hack;
 	      # Delay just for consistency, so that I can Force
 	      # it. (Should use FP::Lazy instead or so)
 	} else {
-	    if (my ($leader)= $s->perhaps_leader) {
+	    if (my ($leader)= $s->perhaps_the ("is_message_leader")) {
 		if (length $prefix) {
 		    Delay {
 			[ "-m",
@@ -398,10 +403,17 @@ while (<$listfh>) {
     chomp;
     $line++;
     next if /^\s*#/;
-    if (/^(\*?)(\d+(?:\w+)?-.+)/) {
-	my ($is_leader,$path)=($1,$2);
+    if (/^([*"t]?)(\d+(?:\w+)?-.+)/) {
+	my ($is_some_leader,$path)=($1,$2);
 	# a squash. extend existing cluster.
-	$curcluster->add_item (Patch->new ($basedir,$path,$is_leader));
+	$curcluster->add_item (Patch->new ($basedir,
+					   $path,
+					   # message leader:
+					   ($is_some_leader
+					    and $is_some_leader=~ /[*"]/),
+					   # time leader:
+					   ($is_some_leader
+					    and $is_some_leader=~ /[*t]/)));
     } elsif (/^\%\s*(.*?)\s*$/s) {
 	# a shell command
 	$curcluster->add_item (Command->new ($1));

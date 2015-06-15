@@ -69,13 +69,24 @@ checked in (in case you want to commit your editing work).
 Now edit the _list, adhering to these rules:
 
 * Patches on subsequent lines are squashed. Put an empty line between
-  each patch or group of patches that should become a new commit.
+  each pair of patches or groups of patches that should become a new
+  commit.
 
-* Within each group, either put a star "*" at beginning of a line to
+* Within each group, put a star "*" at the start of a line to
   indicate the patch that determines the message and author time of
-  the new commit, or alternatively, insert a group of lines somewhere
-  in the group, starting and ending in square brackets that contains
-  the commit message, like:
+  the new commit.
+
+* Alternatively, within each group, put a double quote '"' at
+  the start of a line to indicate the patch that determines the
+  message of the new commit. The author time is instead taken to be
+  the latest author time of all patches in the series.
+
+  And/or put a 't' at the start of a line to indicate the patch that
+  determines the author time (but not the message).
+
+* Alternatively, insert a group of lines somewhere in the group,
+  starting and ending in square brackets that contains the commit
+  message, like:
 [
 commit-message
 
@@ -97,7 +108,7 @@ multiple lines are possible
   If the script fails (does not exit 0), patch application is
   aborted.
 
-* Any line that start with "#" is ignored.
+* Any line that starts with "#" is ignored.
 
 (I suggest you run `gitk &` and step through the history to see the
 full commit messages and diffs easily while editing _list.)
