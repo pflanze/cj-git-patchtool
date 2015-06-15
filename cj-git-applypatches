@@ -325,6 +325,7 @@ sub xgit_do_hack;
 	    } map {
 		$_->author_date
 	    } @{$s->patches};
+
 	    (sort {
 		$$a[0] cmp $$b[0]
 	    } @p)[-1][1]
@@ -474,28 +475,30 @@ use Chj::Git::Functions;
 use Chj::FP::lazy;
 
 sub apply {
-    for my $c (@clusters) {
+    for my $cluster (@clusters) {
 	my $applypatches=sub {
-	    for my $p (@{$c->items}) {
+	    for my $p (@{$cluster->items}) {
 		print "==== ".$p->desc." ====\n";
 		$p->apply;
 	    }
 	};
-	if (my $msgoptions= $c->maybe_msgoptions_promise) {
+	if (my $msgoptions= $cluster->maybe_msgoptions_promise) {
 	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
 	    &$applypatches;
 	    main::xgit_do_hack "reset", "--soft", $oldhead;
 	    my $commit= sub {
 		main::xgit_do_hack "commit", "-a", @{Force $msgoptions};
 	    };
-	    if (my ($author_date)= $c->perhaps_author_date) {
+	    if (my ($author_date)= $cluster->perhaps_author_date) {
 		local $ENV{GIT_AUTHOR_DATE}= $author_date;
-		&$commit
+		&$commit;
 	    } else {
 		# '%' command only, no patches
 		&$commit;
 	    }
 	} else {
+	    # "message does not need to be changed" (singlepatch [or
+	    # not has_patches])
 	    &$applypatches
 	}
     }
