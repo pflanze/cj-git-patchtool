@@ -360,7 +360,14 @@ sub xgit_do_hack;
 			      $prefix . ($thepatch->get_orig_message) ]
 			}
 		    } else {
-			undef
+			if (@{$s->items} == 1) {
+			    # optimization: no need to reset --soft
+			    # and re-commit
+			    undef
+			} else {
+			    # single patch, but also shell commands
+			    Delay { [ "-m", $thepatch->get_orig_message ] }
+			}
 		    }
 		} elsif (not $s->has_patches) {
 		    undef
