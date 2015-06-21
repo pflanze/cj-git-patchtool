@@ -258,6 +258,7 @@ sub xgit_do_hack;
     sub add_item {
 	my $s=shift;
 	undef $$s[_Patches];
+	undef $$s[_Commands];
 	push @{$$s[Items]},@_
     }
 
