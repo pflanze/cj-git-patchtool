@@ -296,7 +296,7 @@ sub xgit_do_hack;
 	not @{$$s[Items]}
     }
 
-    sub perhaps_the {
+    sub perhaps_the_patch_that {
 	# incl. sanitation, i.e. throws exception if more than one
 	# leader is present
 	my $s=shift;
@@ -313,7 +313,7 @@ sub xgit_do_hack;
 	my $s=shift;
 	return ()
 	  unless $s->has_patches;
-	if (my ($leader)= $s->perhaps_the ("is_time_leader")) {
+	if (my ($leader)= $s->perhaps_the_patch_that ("is_time_leader")) {
 	    $leader->author_date
 	} else {
 	    # select the *latest* author_date of all patches.
@@ -344,7 +344,7 @@ sub xgit_do_hack;
 	      # Delay just for consistency, so that I can Force
 	      # it. (Should use FP::Lazy instead or so)
 	} else {
-	    if (my ($leader)= $s->perhaps_the ("is_message_leader")) {
+	    if (my ($leader)= $s->perhaps_the_patch_that ("is_message_leader")) {
 		if (length $prefix) {
 		    Delay {
 			[ "-m",
