@@ -159,23 +159,26 @@ sub xgit_do_hack;
 	my $s=shift;
 	#---
 	use Chj::xopen ();
-	my $f= Chj::xopen::xopen_read $s->path;
 	my $headers={};
 	my $lastkey;
-	while (<$f>) {
-	    chomp;
-	    last if /^$/;
-	    next if /^From /;
-	    if (/^\s+(.*)/) {
-		$$headers{$lastkey}[-1] .= "\n".$1;
-	    } elsif (my ($key,$val)= /^([\w-]+):\s*(.*)/) {
-		$lastkey=lc $key;
-		push @{$$headers{$lastkey}},$val;
-	    } else {
-		die "invalid header in file: '$_' ".$s->path;
+	{
+	    my $f= Chj::xopen::xopen_read $s->path;
+	    local $_; # !!!!!!
+	    while (<$f>) {
+		chomp;
+		last if /^$/;
+		next if /^From /;
+		if (/^\s+(.*)/) {
+		    $$headers{$lastkey}[-1] .= "\n".$1;
+		} elsif (my ($key,$val)= /^([\w-]+):\s*(.*)/) {
+		    $lastkey=lc $key;
+		    push @{$$headers{$lastkey}},$val;
+		} else {
+		    die "invalid header in file: '$_' ".$s->path;
+		}
 	    }
+	    $f->xclose;
 	}
-	$f->xclose;
 	#---
 	@{$$headers{date}||[]}==1
 	  or die "doesn't contain exactly one 'date' header: ".$s->path;
