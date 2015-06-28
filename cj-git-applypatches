@@ -421,9 +421,11 @@ while (<$listfh>) {
 	my $p= Patch->new ($basedir,
 			   $path,
 			   # message leader:
+			   scalar
 			   ($is_some_leader
 			    and $is_some_leader=~ /[*"]/),
 			   # time leader:
+			   scalar
 			   ($is_some_leader
 			    and $is_some_leader=~ /[*t]/));
 	$curcluster->add_item ($p);
