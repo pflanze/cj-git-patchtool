@@ -22,3 +22,8 @@
 - port `cj-git-applypatches` to using functional-perl (and make it an
   example?)
 
+- at least since the "-a" flag was added to the command to commit, it doesn't
+  work with submodules (anymore): it commits to the current submodule
+  in the first commit, then fails when trying to apply any submodule
+  change commits. How to solve this?
+
