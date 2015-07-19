@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=
+# remember, *still* need to quote variables!
+
+if [ $# -ne 0 ]; then
+    echo "usage: $0"
+    echo "  Run from the shell in PATCHES/hostname-N/ when you're done "
+    echo "  with the work from a run of cj-git-patchtool. Commits uncommitted"
+    echo "  changes, compresses .git, removes files in working dir, to"
+    echo "  minimize space usage."
+    exit 1
+fi
+
+status=`git status`
+
+if echo "$status" | grep 'Untracked files:' -q; then
+    echo "Untracked files in working dir, stopping!"
+else
+    if echo "$status" | grep '^nothing to commit' -q; then
+	true
+    else
+	git commit -a -m done
+    fi
+    git gc
+    rm ./*
+    echo OK.
+fi
