@@ -27,3 +27,5 @@
   in the first commit, then fails when trying to apply any submodule
   change commits. How to solve this?
 
+- die when not on a branch instead of running into odd error
+
