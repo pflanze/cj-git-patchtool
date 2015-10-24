@@ -29,3 +29,5 @@
 
 - die when not on a branch instead of running into odd error
 
+- binary files: at least stop with an error message
+
