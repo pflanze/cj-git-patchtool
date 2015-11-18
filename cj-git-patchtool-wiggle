@@ -119,7 +119,7 @@ my $rej= do {
 
 print "Ok, patch possibly applied.\n";
 
-use Chj::Util::AskYN 'askyn';
+use Chj::Util::AskYN qw(maybe_askyn);
 
 my $nwiggles=0;
 for my $rejfile (@$rej) {
@@ -136,7 +136,7 @@ for my $rejfile (@$rej) {
     }
     my $res= xsystem "wiggle", "--replace", $file,$rejfile;
     if ($res) {
-	if (!askyn "wiggle exited with error code $res; continue? ") {
+	if (!maybe_askyn "wiggle exited with error code $res; continue? ") {
 	    die "stopped by user request.\n";
 	}
     }
