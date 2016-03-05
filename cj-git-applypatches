@@ -17,6 +17,11 @@ sub usage {
   Like with rebase -i, prefixing patches with 's' is possible. The
   ordering is as in the file.
 
+  Options:
+
+    --no-early   do *not* check for missing titles etc. before starting
+                 the patching process.
+
   (Christian Jaeger <$email>)
 ";
 exit (@_ ? 1 : 0);
@@ -24,10 +29,12 @@ exit (@_ ? 1 : 0);
 
 use Getopt::Long;
 our $verbose=0;
+our $opt_no_early;
 our $opt_dry;
 GetOptions("verbose"=> \$verbose,
 	   "help"=> sub{usage},
 	   "dry-run"=> \$opt_dry,
+	   "no-early"=> \$opt_no_early,
 	   ) or exit 1;
 usage unless @ARGV==1;
 
@@ -489,6 +496,9 @@ use Chj::Git::Functions;
 use Chj::FP::lazy;
 
 sub apply {
+    my ($early)=@_; # early means, just check for errors in the source
+                    # file (similar? to dry-run)
+
     for my $cluster (@clusters) {
 	my $applypatches=sub {
 	    for my $p (@{$cluster->items}) {
@@ -497,9 +507,11 @@ sub apply {
 	    }
 	};
 	if (my $msgoptions= $cluster->maybe_msgoptions_promise) {
-	    my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
-	    &$applypatches;
-	    main::xgit_do_hack "reset", "--soft", $oldhead;
+	    unless ($early) {
+		my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
+		&$applypatches();
+		main::xgit_do_hack "reset", "--soft", $oldhead;
+	    }
 	    my @moreoptions= do {
 		if (my ($author_date)= $cluster->perhaps_author_date) {
 		    ("--date", $author_date);
@@ -508,12 +520,16 @@ sub apply {
 		    ()
 		}
 	    };
-	    main::xgit_do_hack "commit", "-a",
-		@{Force $msgoptions}, @moreoptions;
+	    unless ($early) {
+		main::xgit_do_hack "commit", "-a",
+		    @{Force $msgoptions}, @moreoptions;
+	    }
 	} else {
 	    # "message does not need to be changed" (singlepatch [or
 	    # not has_patches])
-	    &$applypatches
+	    unless ($early) {
+		&$applypatches();
+	    }
 	}
     }
 }
@@ -528,8 +544,14 @@ if ($errors) {
     if ($opt_dry) {
 	print "no errors in input file; ".
 	  "not running because in dry-run mode.\n";
+	# NOTE: dry mode does not check for missing cluster titles and
+	# such! Pointless?!!! Implemented new early checking behaviour
+	# instead (--no-early).
     } else {
-	apply;
+	unless ($opt_no_early) {
+	    apply 1;
+	}
+	apply 0;
 	print "Ok.\n";
     }
 }
