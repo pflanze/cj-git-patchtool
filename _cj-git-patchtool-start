@@ -49,6 +49,7 @@ cd "$tmpdir"
 git format-patch --thread -M -C "$baseid".."$endid"
 ls *.patch > _list
 echo "$baseid" > _baseid
+echo "$baseid" > _origbaseid
 echo "$endid" > _origheadid
 
 cd ..
