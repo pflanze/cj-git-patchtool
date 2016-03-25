@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -eu
+
+usage () {
+    echo "$0 patchfilename"
+    echo "  runs gitk on \"\$CJ_GIT_PATCHTOOL_BASEDIR\"/{_origbaseid,_origheadid}"
+    exit 1
+}
+
+if [ $# -ne 0 ]; then
+    usage
+fi
+
+base=`cat "$CJ_GIT_PATCHTOOL_BASEDIR"/_origbaseid`
+end=`cat "$CJ_GIT_PATCHTOOL_BASEDIR"/_origheadid`
+
+gitk "$base".."$end" &
+
