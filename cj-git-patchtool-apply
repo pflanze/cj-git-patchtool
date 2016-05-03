@@ -19,12 +19,12 @@ set -eu
 
 basedir="$1"
 
-test -d .git/ || { echo "missing .git dir"; exit 1; }
+gdir=`git rev-parse --git-dir`
 
 baseid=`cat "$basedir/_baseid"`
 
-if [ -e .git/rebase-apply/ ]; then
-    trash .git/rebase-apply/
+if [ -e "$gdir"/rebase-apply/ ]; then
+    trash "$gdir"/rebase-apply/
 fi
 
 git reset --hard "$baseid"
