@@ -6,7 +6,7 @@ set -eu
 
 # config:
 
-export CJ_GIT_PATCHTOOL_SOURCEDIR=/root/TEMP/cj-git-patchtool
+export CJ_GIT_PATCHTOOL_SOURCEDIR=$(dirname "$(readlink -f "$0")")
 
 BASEBASEDIR=PATCHES
 ##^^ BUT: also update PATCHES in perl snipped below!gr (along with /P assumption)
