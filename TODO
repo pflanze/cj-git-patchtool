@@ -35,3 +35,12 @@
   patch complains about overwriting existing file or so ?  it didn't
   do a patching in a unknown blobs case and I had to manually do it
   but it was just a change of the blobs and line numbers, thus, huh.
+
+- in some situations, moving a patch will not lead to a conflict but
+  to it being dropped without any error popping up (if the same patch
+  and its reversal were before it, but now after it). This leads to
+  potentially hard to track down differences in the end result. Parse
+  git output for such cases, and/or offer to hard group the patches
+  somehow (i.e. make a single patch out of a group *before* the
+  re-ordering)?
+
