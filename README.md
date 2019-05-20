@@ -19,6 +19,16 @@ state if you want, to keep a history of your history editing work :).
 
 ## Installation
 
+Installation can either be done via a tool or manually:
+
+### Via chjize
+
+[chjize](https://github.com/pflanze/chjize) is a tool to install
+dependencies that my software uses. Follow the instructions there and
+then run `make cj-git-patchtool`.
+
+### Manually
+
 * Install chj-bin and chj-perllib:
 
         # cd /opt; mkdir chj; cd chj
@@ -31,14 +41,14 @@ state if you want, to keep a history of your history editing work :).
     and add /opt/chj/bin to your PATH (through your .bash_profile or
     similar)
 
-* and
+* Install wiggle (Debian has it in the "wiggle" package)
+
+* Make cj-git-patchtool accessible
 
         # cd /opt/chj
         # git clone https://github.com/pflanze/cj-git-patchtool.git
 
     and add /opt/chj/cj-git-patchtool to your PATH
-
-* Install wiggle (Debian has it in the "wiggle" package)
 
 
 ## Usage
