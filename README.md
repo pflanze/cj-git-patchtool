@@ -145,14 +145,20 @@ back to the patch file so that you don't have to run `wig` in
 subsequent `app` runs.
 
 If you're done, just close the editor buffer, exit the terminal with
-the state files, and exit the subshell (hit ctl-d).
+the state files, and exit the subshell (hit ctl-d). To minimize space
+use of the subdirectory in `PATCHES`, run `cj-git-patchtool-done`
+before exiting the terminal with the state file (it adds and commits
+all changes, removes all files from the working directory except for
+`.git`, and runs `git gc`).
 
 If you later decide that you didn't actually finish, run:
 
     $ cj-git-patchtool --resume PATCHES/$name_of_the_patch_subdirectory
 
 to get back into the subshell. (Currently, you'll have to reopen the
-`_list` file and terminal with the state directory manually.)
+`_list` file and terminal with the state directory manually, and if
+you ran `cj-git-patchtool-done` then you'll have to run `git reset
+--hard` to get back the files first.)
 
 
 ## Tips
