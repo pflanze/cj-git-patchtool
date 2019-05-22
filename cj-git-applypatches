@@ -372,10 +372,22 @@ sub xgit_do_hack;
 	    unless $s->has_patches;
 	if (my ($leader)= $s->perhaps_the_patch_that ("is_author_leader")) {
 	    $leader->author
-	} elsif (my ($patch)= $s->perhaps_singlepatch) {
-	    $patch->author
 	} else {
-	    ()
+	    my @_authors= map {
+		$_->author
+	    } @{$s->patches};
+	    my %authors= map {
+		$_ => 1
+	    } @_authors;
+	    my @authors= keys %authors;
+	    if (@authors==1) {
+		$authors[0]
+	    } else {
+		warn "**NOTE**: more than one author in cluster on line "
+		    .($s->line).", maybe specify 'a' on a patch:\n"
+		    .join("", sort map { "          $_\n" } @authors);
+		()
+	    }
 	}
     }
 
