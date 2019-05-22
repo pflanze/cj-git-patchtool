@@ -84,9 +84,9 @@ Now edit the `_list`, adhering to these rules:
   each pair of patches or groups of patches that should become a new
   commit.
 
-* Within each group, put a star `*` at the start of a line to
-  indicate the patch that determines the message and author time of
-  the new commit.
+* Within each group, put a star `*` at the start of a line to indicate
+  the patch that determines the message, author time and author of the
+  new commit.
 
 * Alternatively, within each group, put a double quote `"` at
   the start of a line to indicate the patch that determines the
@@ -95,6 +95,9 @@ Now edit the `_list`, adhering to these rules:
 
   And/or put a `t` at the start of a line to indicate the patch that
   determines the author time (but not the message).
+  
+  Also, put a `a` at the start of a line to indicate the patch that
+  determines the author name/email.
 
 * Alternatively, insert a group of lines somewhere in the group,
   starting and ending in square brackets that contains the commit

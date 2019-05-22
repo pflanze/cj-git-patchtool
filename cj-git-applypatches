@@ -91,9 +91,11 @@ sub xgit_do_hack;
       (
        'basedir',
        'filename',
-       'is_message_leader', # giving the message.
-       'is_time_leader', # giving the author time.
+       'is_message_leader', # provides the message.
+       'is_time_leader', # provides the author time.
+       'is_author_leader', # provides the author name/email.
        'commitid', # set-once.
+       'headers', # cache
       );
     sub is_patch { 1 }
 
@@ -162,34 +164,55 @@ sub xgit_do_hack;
 	}
     }
 
-    sub author_date {
+    sub headers {
 	my $s=shift;
-	#---
-	use Chj::xopen ();
-	my $headers={};
-	my $lastkey;
-	{
-	    my $f= Chj::xopen::xopen_read $s->path;
-	    local $_; # !!!!!!
-	    while (<$f>) {
-		chomp;
-		last if /^$/;
-		next if /^From /;
-		if (/^\s+(.*)/) {
-		    $$headers{$lastkey}[-1] .= "\n".$1;
-		} elsif (my ($key,$val)= /^([\w-]+):\s*(.*)/) {
-		    $lastkey=lc $key;
-		    push @{$$headers{$lastkey}},$val;
-		} else {
-		    die "invalid header in file: '$_' ".$s->path;
+	$$s[Headers] ||= do {
+	    use Chj::xopen ();
+	    my $headers={};
+	    my $lastkey;
+	    {
+		my $f= Chj::xopen::xopen_read $s->path;
+		local $_; # !!!!!!
+		while (<$f>) {
+		    chomp;
+		    last if /^$/;
+		    next if /^From /;
+		    if (/^\s+(.*)/) {
+			$$headers{$lastkey}[-1] .= "\n".$1;
+		    } elsif (my ($key,$val)= /^([\w-]+):\s*(.*)/) {
+			$lastkey=lc $key;
+			push @{$$headers{$lastkey}},$val;
+		    } else {
+			die "invalid header in file: '$_' ".$s->path;
+		    }
 		}
+		$f->xclose;
 	    }
-	    $f->xclose;
+	    $headers
 	}
-	#---
-	@{$$headers{date}||[]}==1
-	  or die "doesn't contain exactly one 'date' header: ".$s->path;
-	$$headers{date}[0]
+    }
+
+    my $get_single_header_named= sub {
+	my ($name)= @_;
+	sub {
+	    my $s=shift;
+	    my $headers= $s->headers;
+	    my @res= @{$$headers{$name}||[]};
+	    @res == 1 ? $res[0] : do {
+		my $msg= @res ? "more than one" : "no";
+		die "contains $msg '$name' header: ".$s->path;
+	    }
+	}
+    };
+
+    sub author_date; *author_date= $get_single_header_named->("date");
+    sub author; *author= $get_single_header_named->("from");
+    sub author_name_and_email {
+	my $s=shift;
+	my $author= $s->author;
+	my ($name, $mail)= $author=~ m/^\s*(.*?)\s*<([^<>]+)>\s*$/
+	  or die "no match on author '$author'";
+	($name, $mail)
     }
 
     use Chj::Git::Functions;
@@ -343,6 +366,15 @@ sub xgit_do_hack;
 	}
     }
 
+    sub perhaps_author {
+	my $s=shift;
+	if (my ($leader)= $s->perhaps_the_patch_that ("is_author_leader")) {
+	    $leader->author
+	} else {
+	   ()
+	}
+    }
+
     use Chj::FP::lazy;
     sub maybe_msgoptions_promise {
 	# either false if message does not need to be changed,
@@ -422,7 +454,7 @@ while (<$listfh>) {
     chomp;
     $line++;
     next if /^\s*#/;
-    if (/^([*"t]?)(\d+(?:\w+)?-.+)/) {
+    if (/^([*"ta]*)(\d+(?:\w+)?-.+)/) {
 	my ($is_some_leader,$path)=($1,$2);
 	# a squash. extend existing cluster.
 	my $p= Patch->new ($basedir,
@@ -434,7 +466,11 @@ while (<$listfh>) {
 			   # time leader:
 			   scalar
 			   ($is_some_leader
-			    and $is_some_leader=~ /[*t]/));
+			    and $is_some_leader=~ /[*t]/),
+			   # author leader:
+			   scalar
+			   ($is_some_leader
+			    and $is_some_leader=~ /[*a]/));
 	$curcluster->add_item ($p);
     } elsif (/^\%\s*(.*?)\s*$/s) {
 	# a shell command
@@ -512,14 +548,24 @@ sub apply {
 		&$applypatches();
 		main::xgit_do_hack "reset", "--soft", $oldhead;
 	    }
-	    my @moreoptions= do {
-		if (my ($author_date)= $cluster->perhaps_author_date) {
-		    ("--date", $author_date);
-		} else {
-		    # '%' command only, no patches
-		    ()
-		}
-	    };
+	    my @moreoptions=
+	      (
+	       do {
+		   if (my ($author_date)= $cluster->perhaps_author_date) {
+		       ("--date", $author_date)
+		   } else {
+		       # '%' command only, no patches
+		       ()
+		   }
+	       },
+	       do {
+		   if (my ($author)= $cluster->perhaps_author) {
+		       ("--author", $author)
+		   } else {
+		       ()
+		   }
+	       }
+	      );
 	    unless ($early) {
 		main::xgit_do_hack "commit", "-a",
 		    @{Force $msgoptions}, @moreoptions;
