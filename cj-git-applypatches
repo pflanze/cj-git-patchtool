@@ -70,7 +70,7 @@ sub xgit_do_hack;
 *xgit_do_hack= make_xgit_do_hack
   (sub {
        my ($base)=@_;
-       xsystem "trash", "$base/rebase-apply";
+       xsystem "rm", "-rf", "--", "$base/rebase-apply";
        git_wait_lock ($base);
        xgit_do "reset","--hard"; # needed?
        git_wait_lock ($base);

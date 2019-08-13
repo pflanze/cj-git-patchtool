@@ -131,7 +131,7 @@ for my $rejfile (@$rej) {
     {
 	my $porig=$file.".porig";
 	if (-e $porig) {
-	    xxsystem "trash", $porig;#wl just unlink?
+	    unlink $porig;
 	}
     }
     my $res= xsystem "wiggle", "--replace", $file,$rejfile;

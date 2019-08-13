@@ -66,7 +66,7 @@ sub reset_hard {
     xgit_do "reset","--hard"; #still assumes cwd in git repo
     $gitdir||=".git"; ##
     my $d= "$gitdir/rebase-apply";
-    xxsystem "trash",$d if -e $d;
+    xxsystem "rm", "-rf", "--", $d if -e $d;
 }
 
 sub xgit_do_hack_reset;

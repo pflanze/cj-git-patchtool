@@ -24,7 +24,7 @@ gdir=`git rev-parse --git-dir`
 baseid=`cat "$basedir/_baseid"`
 
 if [ -e "$gdir"/rebase-apply/ ]; then
-    trash "$gdir"/rebase-apply/
+    rm -rf -- "$gdir"/rebase-apply/
 fi
 
 git reset --hard "$baseid"
