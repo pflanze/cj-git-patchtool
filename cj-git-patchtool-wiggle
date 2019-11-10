@@ -16,7 +16,9 @@ $myname basedir/patchfilename
   apply patchfile, then feed the rejects to wiggle,
   if those worked out, save the new diff into the patchfile.
 
-  CAREFUL: runs reset --hard (and modifies the patchfile)
+  Careful:
+    - runs reset --hard
+    - modifies the patchfile (but that should be in Git)
 
   (Christian Jaeger <$email>)
 ";
