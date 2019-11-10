@@ -5,6 +5,24 @@
 
 use strict;
 
+use Getopt::Long;
+use Chj::Util::AskYN qw(maybe_askyn);
+use Chj::xpipe;
+use Chj::Unix::exitcode;
+use Chj::xperlfunc;
+use Chj::xopen 'xopen_read';
+use Chj::xtmpfile;
+use Chj::IO::Command;
+
+
+sub hash_xadd ($$$) {
+    my ($h,$k,$v)=@_;
+    die "key already in hash: '$k'"
+      if exists $$h{$k};
+    $$h{$k}= $v;
+}
+
+
 $0=~ /(.*?)([^\/]+)\z/s or die "?";
 my ($mydir, $myname)=($1,$2);
 sub usage {
@@ -25,7 +43,6 @@ $myname basedir/patchfilename
 exit (@_ ? 1 : 0);
 }
 
-use Getopt::Long;
 our $verbose=0;
 #our $opt_dry;
 GetOptions("verbose"=> \$verbose,
@@ -44,10 +61,6 @@ our $patchpath = do {
     }
 };
 
-use Chj::xperlfunc;
-use Chj::xopen 'xopen_read';
-use Chj::xtmpfile;
-use Chj::IO::Command;
 
 my $oldpatch= xopen_read $patchpath;
 
@@ -55,7 +68,6 @@ xxsystem "git","reset","--hard";
 
 #hm grr how again pipelines sigh whatever
 my $rej= do {
-    use Chj::xpipe;
     my ($r,$w)=xpipe;
     if (xfork) {
 	$w->xclose;
@@ -102,7 +114,6 @@ my $rej= do {
 	($code==0
 	 or $code== (1<<8))
 	  or do {
-	      use Chj::Unix::exitcode;
 	      die "patch died of a serious error, code ".exitcode($code);
 	  };
 
@@ -121,22 +132,22 @@ my $rej= do {
 
 print "Ok, patch possibly applied.\n";
 
-use Chj::Util::AskYN qw(maybe_askyn);
-
 my $nwiggles=0;
+my %wiggled;
 for my $rejfile (@$rej) {
     print "Calling wiggle for '$rejfile'..\n";
     # +-copy from /opt/chj/bin/wiggle¬
     my $file= $rejfile;
     $file=~ s/\.rej$//
       or die "file '$file' does not have suffix .rej";
+    $wiggled{$file}++;
     {
 	my $porig=$file.".porig";
 	if (-e $porig) {
 	    unlink $porig;
 	}
     }
-    my $res= xsystem "wiggle", "--replace", $file,$rejfile;
+    my $res= xsystem "wiggle", "--replace", $file, $rejfile;
     if ($res) {
 	if (!maybe_askyn "wiggle exited with error code $res; continue? ") {
 	    die "stopped by user request.\n";
@@ -148,31 +159,76 @@ for my $rejfile (@$rej) {
 print "Ok, $nwiggles wiggles.\n";
 
 
+sub parse_patch ($) {
+    my ($in)= @_;
+    my @headlines;
+    my @diffparts;
+    # ({ oldfilename=> ..,
+    #    newfilename=> ..,
+    #    lines=> [ lines.. ] }.. )
+    my $touchedfilename2part= {};
+    my $maybe_current_collector;
+    while (<$in>) {
+        if (my ($a,$b)= m{^diff --git a/(\S*) b/(\S*)}) {
+            # ^XX this is a bit unsafe, could be part of commit
+            # message! A proper check would be for "---" then
+            # emptyline then diff? or something. Also assumes no
+            # whitespace(/special chars) in paths.
+
+            $maybe_current_collector= [$_];
+            my $part=  +{ oldfilename=> $a,
+                          newfilename=> $b,
+                          lines=> $maybe_current_collector};
+            push @diffparts, $part;
+            hash_xadd $touchedfilename2part, $a, $part;
+            hash_xadd $touchedfilename2part, $b, $part
+              unless $a eq $b;
+        } else {
+            if ($maybe_current_collector) {
+                push @$maybe_current_collector, $_;
+            } else {
+                push @headlines, $_;
+            }
+        }
+    }
+    +{ headlines=> \@headlines,
+       diffparts=> \@diffparts,
+       touchedfilename2part=> $touchedfilename2part,
+     }
+}
+
+
 {
     # Update the patchfile:
 
+    # Copy the head from oldpatch, and an assortment of diff parts
+    # from `git diff` and the old patch.
+
     $oldpatch->xrewind;
+    my $oldp= parse_patch($oldpatch);
+    $oldpatch->xclose;
 
+    # Get the `git diff`, also split into parts:
+    my $d= Chj::IO::Command->new_sender ("git","diff");
+    my $gitp= parse_patch($d);
+    $d->xxfinish;
+
+    # Recreate the patchfile:
     my $new= xtmpfile $patchpath;
+    $new->xprint(@{ $oldp->{headlines} });
 
-    while (<$oldpatch>) {
-        # copy the head from oldpatch
-        if (/^diff --git a\//) {
-            ##^this is a bit unsafe, could be part of commit message!
-            ## proper check would be for "---" then emptyline then diff? or something.
-            $oldpatch->xclose;
-
-            # Copy the new diff into the new patchfile
-            {
-                $new->xflush; # important before sendfile
-                my $d= Chj::IO::Command->new_sender ("git","diff");
-                $d->xsendfile_to ($new);
-                $d->xxfinish;
-            }
-            last;
-        } else {
-            $new->xprint($_);
-        }
+    for my $diffpart (@{ $oldp->{diffparts} }) {
+        my $filename= $diffpart->{newfilename};
+        # Take diff part from gitp if present, otherwise from
+        # oldp. Note that we can't just look at
+        # $gitp->{touchedfilename2part}{$filename} to know whether wee
+        # need to choose gitp, since if it wasn't wiggled, the git
+        # diff will still have the file but as a deletion.
+        my $lines= ($wiggled{$filename} ?
+                    $gitp->{touchedfilename2part}{$filename} :
+                    $diffpart)
+          ->{lines};
+        $new->xprint(@$lines);
     }
     $new->xclose;
     $new->xputback;
@@ -182,3 +238,4 @@ print "Ok.\n";
 
 #use Chj::ruse;
 #use Chj::Backtrace; use Chj::repl; repl;
+#use Chj::Trapl;
