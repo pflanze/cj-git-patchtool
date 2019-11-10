@@ -49,7 +49,7 @@ use Chj::xopen 'xopen_read';
 use Chj::xtmpfile;
 use Chj::IO::Command;
 
-my $in= xopen_read $patchpath;
+my $oldpatch= xopen_read $patchpath;
 
 xxsystem "git","reset","--hard";
 
@@ -112,8 +112,8 @@ my $rej= do {
 	$w->xdup2(1);
 	$w->xdup2(2);
 	my $p= Chj::IO::Command->new_receiver("patch","--ignore-whitespace","-p1");
-	$in->xsendfile_to ($p);
-	$in->xclose;
+	$oldpatch->xsendfile_to ($p);
+	$oldpatch->xclose;
 	$p->xfinish;
 	exit;
     }
@@ -147,24 +147,35 @@ for my $rejfile (@$rej) {
 
 print "Ok, $nwiggles wiggles.\n";
 
-# create new patchfile:
-$in->xrewind;
-my $new= xtmpfile $patchpath;
-my $d= Chj::IO::Command->new_sender ("git","diff");
-while (<$in>) {
-    if (/^diff --git a\//) {
-	##^this is a bit unsafe, could be part of commit message!
-	## proper check would be for "---" then emptyline then diff? or something.
-	$new->xflush; #important! before sendfile
-	$d->xsendfile_to ($new);
-	$d->xxfinish;
-	$in->xclose;
-	$new->xclose;
-	$new->xputback;
-	last;
-    } else {
-	$new->xprint($_);
+
+{
+    # Update the patchfile:
+
+    $oldpatch->xrewind;
+
+    my $new= xtmpfile $patchpath;
+
+    while (<$oldpatch>) {
+        # copy the head from oldpatch
+        if (/^diff --git a\//) {
+            ##^this is a bit unsafe, could be part of commit message!
+            ## proper check would be for "---" then emptyline then diff? or something.
+            $oldpatch->xclose;
+
+            # Copy the new diff into the new patchfile
+            {
+                $new->xflush; # important before sendfile
+                my $d= Chj::IO::Command->new_sender ("git","diff");
+                $d->xsendfile_to ($new);
+                $d->xxfinish;
+            }
+            last;
+        } else {
+            $new->xprint($_);
+        }
     }
+    $new->xclose;
+    $new->xputback;
 }
 
 print "Ok.\n";
