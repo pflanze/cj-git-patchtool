@@ -218,7 +218,7 @@ sub xgit_do_hack;
     use Chj::Git::Functions;
     sub apply {
         my $s=shift;
-        main::xgit_do_hack "am", "-3", $s->path;
+        main::xgit_do_hack "am", "-3", "--ignore-whitespace", $s->path;
         # ^ does not output the new commitid in a clear way, thus:
         my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
         $s->set_commitid ($commitid);
