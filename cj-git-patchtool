@@ -42,15 +42,15 @@ hn=`hostname`
 choose_basedir () {
     # find newest number and increment.
     n=`perl -w -MChj::xperlfunc=basename -e \
-	'
+        '
 $m=-1;
 for (glob "PATCHES/'"$hn"'-*") {
     $bn=basename $_;
     if ($bn=~ /^'"$hn"'-(\d+)/) {
         $n=$1;
-	if ($n > $m) {
-	    $m= $n
-	}
+        if ($n > $m) {
+            $m= $n
+        }
     }
 }
 print $m+1, "\n"'`
@@ -61,54 +61,54 @@ start_new_patch_session () {
     # start-id, maybe-end-id
     choose_basedir
     "$CJ_GIT_PATCHTOOL_SOURCEDIR"/_cj-git-patchtool-start \
-	"$1" "$CJ_GIT_PATCHTOOL_BASEDIR" "${2-HEAD}"
+        "$1" "$CJ_GIT_PATCHTOOL_BASEDIR" "${2-HEAD}"
 }
 
 if [ $# -eq 2 ]; then
     if [ "$1" = "-s" -o "$1" = "--start" ]; then
-	start_new_patch_session "$2"
+        start_new_patch_session "$2"
     elif [ "$1" = "--resume" ]; then
-	# continue with an existing patch session
-	CJ_GIT_PATCHTOOL_BASEDIR="$2"
+        # continue with an existing patch session
+        CJ_GIT_PATCHTOOL_BASEDIR="$2"
     else
-	usage
+        usage
     fi
 elif [ $# -eq 4 ]; then
     # yeah, definitely hacky, anyone for doing proper getopt?
     if [ "$1" = "-s" -o "$1" = "--start" ]; then
-	startid="$2"
-	if [ "$3" = "-e" -o "$3" = "--end" ]; then
-	    endid="$4"
-	    start_new_patch_session "$startid" "$endid"
-	else
-	    echo "unknown or unexpected option '$3'"
-	    usage
-	fi
+        startid="$2"
+        if [ "$3" = "-e" -o "$3" = "--end" ]; then
+            endid="$4"
+            start_new_patch_session "$startid" "$endid"
+        else
+            echo "unknown or unexpected option '$3'"
+            usage
+        fi
     elif [ "$1" = "-e" -o "$1" = "--end" ]; then
-	endid="$2"
-	if [ "$3" = "-s" -o "$3" = "--start" ]; then
-	    startid="$4"
-	    start_new_patch_session "$startid" "$endid"
-	else
-	    echo "unknown or unexpected option '$3'"
-	    usage
-	fi
+        endid="$2"
+        if [ "$3" = "-s" -o "$3" = "--start" ]; then
+            startid="$4"
+            start_new_patch_session "$startid" "$endid"
+        else
+            echo "unknown or unexpected option '$3'"
+            usage
+        fi
     else
-	echo "unknown or unexpected option '$1'"
-	usage
+        echo "unknown or unexpected option '$1'"
+        usage
     fi
 elif [ $# -eq 1 ]; then
     if [ "$1" = "--pick" ]; then
-	choose_basedir
-	# only initialize a repo
-	mkdir "$CJ_GIT_PATCHTOOL_BASEDIR"
-	(
-	    set -eu
-	    cd "$CJ_GIT_PATCHTOOL_BASEDIR"
-	    cj-git-init
-	)
+        choose_basedir
+        # only initialize a repo
+        mkdir "$CJ_GIT_PATCHTOOL_BASEDIR"
+        (
+            set -eu
+            cd "$CJ_GIT_PATCHTOOL_BASEDIR"
+            cj-git-init
+        )
     else
-	usage
+        usage
     fi
 else
     usage

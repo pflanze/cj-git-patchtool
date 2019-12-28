@@ -46,18 +46,18 @@ exit (@_ ? 1 : 0);
 our $verbose=0;
 #our $opt_dry;
 GetOptions("verbose"=> \$verbose,
-	   "help"=> sub{usage},
-	   #"dry-run"=> \$opt_dry,
-	   ) or exit 1;
+           "help"=> sub{usage},
+           #"dry-run"=> \$opt_dry,
+           ) or exit 1;
 
 our $patchpath = do {
     if (@ARGV==2) {
-	my($basedir,$patchfilename)=@ARGV;
-	"$basedir/$patchfilename"
+        my($basedir,$patchfilename)=@ARGV;
+        "$basedir/$patchfilename"
     } elsif (@ARGV==1) {
-	$ARGV[0]
+        $ARGV[0]
     } else {
-	usage
+        usage
     }
 };
 
@@ -70,63 +70,63 @@ xxsystem "git","reset","--hard";
 my $rej= do {
     my ($r,$w)=xpipe;
     if (xfork) {
-	$w->xclose;
+        $w->xclose;
 
-	my @rej;
-	while (<$r>) {
-	    next if /^patching file /;
-	    next if /^Hunk #\d+ FAILED/;
-	    chomp;
-	    if (/\d+ out of \d+ hunks? (?:FAILED|ignored).*saving rejects to file (.*)/) {
-		my $file=$1;
-		if ($file=~ s/^'//) {
-		    $file=~ s/'$// or die "hmm [$file] how?";
-		}
-		push @rej, $file;
-	    } elsif ($_ eq 'Reversed (or previously applied) patch detected!  Assume -R? [n] ') {
-		print "NOTE: $_\n";
-		#since i'm not sure what to do then.
-	    } elsif ($_ eq 'Apply anyway? [n] ') {
-		print "NOTE: $_\n";
-		#grr.  why does it ask when I said -f ?
-	    } elsif ($_ eq 'Skipping patch.') {
-		print "NOTE: $_\n";
-		#HMMMMM.
-	    } elsif (/^Hunk #\d+ succeeded/) {
-		# print?
-		print "NOTE: $_\n";
-	    } elsif (/^patch: .* malformed patch at/) {
-		# handedited patch, from xemacs, hum. anyway, hope it will be fixed by wiggle.
-		print "NOTE: $_\n";
-		#hm. but die anyway, it seems patch does not produce an actual rej file then!
-		die "cannot proceed";
-	    } elsif ($_ eq '') {
-		#eh.whatever
-	    } else {
-		die "unknown message from patch: '$_'";
-	    }
-	}
+        my @rej;
+        while (<$r>) {
+            next if /^patching file /;
+            next if /^Hunk #\d+ FAILED/;
+            chomp;
+            if (/\d+ out of \d+ hunks? (?:FAILED|ignored).*saving rejects to file (.*)/) {
+                my $file=$1;
+                if ($file=~ s/^'//) {
+                    $file=~ s/'$// or die "hmm [$file] how?";
+                }
+                push @rej, $file;
+            } elsif ($_ eq 'Reversed (or previously applied) patch detected!  Assume -R? [n] ') {
+                print "NOTE: $_\n";
+                #since i'm not sure what to do then.
+            } elsif ($_ eq 'Apply anyway? [n] ') {
+                print "NOTE: $_\n";
+                #grr.  why does it ask when I said -f ?
+            } elsif ($_ eq 'Skipping patch.') {
+                print "NOTE: $_\n";
+                #HMMMMM.
+            } elsif (/^Hunk #\d+ succeeded/) {
+                # print?
+                print "NOTE: $_\n";
+            } elsif (/^patch: .* malformed patch at/) {
+                # handedited patch, from xemacs, hum. anyway, hope it will be fixed by wiggle.
+                print "NOTE: $_\n";
+                #hm. but die anyway, it seems patch does not produce an actual rej file then!
+                die "cannot proceed";
+            } elsif ($_ eq '') {
+                #eh.whatever
+            } else {
+                die "unknown message from patch: '$_'";
+            }
+        }
 
-	$r->xclose;
-	#my $code= xwait;
-	xwait;
-	my $code= $?; #GAH
-	($code==0
-	 or $code== (1<<8))
-	  or do {
-	      die "patch died of a serious error, code ".exitcode($code);
-	  };
+        $r->xclose;
+        #my $code= xwait;
+        xwait;
+        my $code= $?; #GAH
+        ($code==0
+         or $code== (1<<8))
+          or do {
+              die "patch died of a serious error, code ".exitcode($code);
+          };
 
-	\@rej
+        \@rej
     } else {
-	$r->xclose;
-	$w->xdup2(1);
-	$w->xdup2(2);
-	my $p= Chj::IO::Command->new_receiver("patch","--ignore-whitespace","-p1");
-	$oldpatch->xsendfile_to ($p);
-	$oldpatch->xclose;
-	$p->xfinish;
-	exit;
+        $r->xclose;
+        $w->xdup2(1);
+        $w->xdup2(2);
+        my $p= Chj::IO::Command->new_receiver("patch","--ignore-whitespace","-p1");
+        $oldpatch->xsendfile_to ($p);
+        $oldpatch->xclose;
+        $p->xfinish;
+        exit;
     }
 };
 
@@ -142,16 +142,16 @@ for my $rejfile (@$rej) {
       or die "file '$file' does not have suffix .rej";
     $wiggled{$file}++;
     {
-	my $porig=$file.".porig";
-	if (-e $porig) {
-	    unlink $porig;
-	}
+        my $porig=$file.".porig";
+        if (-e $porig) {
+            unlink $porig;
+        }
     }
     my $res= xsystem "wiggle", "--replace", $file, $rejfile;
     if ($res) {
-	if (!maybe_askyn "wiggle exited with error code $res; continue? ") {
-	    die "stopped by user request.\n";
-	}
+        if (!maybe_askyn "wiggle exited with error code $res; continue? ") {
+            die "stopped by user request.\n";
+        }
     }
     $nwiggles++;
 }

@@ -19,9 +19,9 @@ if echo "$status" | grep 'Untracked files:' -q; then
     echo "Untracked files in working dir, stopping!"
 else
     if echo "$status" | grep '^nothing to commit' -q; then
-	true
+        true
     else
-	git commit -a -m done
+        git commit -a -m done
     fi
     git gc
     rm ./*

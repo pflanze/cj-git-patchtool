@@ -32,10 +32,10 @@ our $verbose=0;
 our $opt_no_early;
 our $opt_dry;
 GetOptions("verbose"=> \$verbose,
-	   "help"=> sub{usage},
-	   "dry-run"=> \$opt_dry,
-	   "no-early"=> \$opt_no_early,
-	   ) or exit 1;
+           "help"=> sub{usage},
+           "dry-run"=> \$opt_dry,
+           "no-early"=> \$opt_no_early,
+           ) or exit 1;
 usage unless @ARGV==1;
 
 our ($listfile)=@ARGV;
@@ -43,14 +43,14 @@ our ($listfile)=@ARGV;
 {
     package _Error;
     sub new {
-	my $cl=shift;
-	@_==1 or die "expect 1 arg";
-	my ($msg)=@_;
-	bless \$msg, $cl
+        my $cl=shift;
+        @_==1 or die "expect 1 arg";
+        my ($msg)=@_;
+        bless \$msg, $cl
     }
     sub string {
-	my $s=shift;
-	$$s
+        my $s=shift;
+        $$s
     }
 }
 {
@@ -100,128 +100,128 @@ sub xgit_do_hack;
     sub is_patch { 1 }
 
     sub new {
-	my $cl=shift;
-	bless [@_],$cl
+        my $cl=shift;
+        bless [@_],$cl
     }
 
     sub desc {
-	my $s=shift;
-	$s->filename
+        my $s=shift;
+        $s->filename
     }
 
     sub path {
-	my $s=shift;
-	"$$s[Basedir]/$$s[Filename]"
+        my $s=shift;
+        "$$s[Basedir]/$$s[Filename]"
     }
 
     sub set_commitid {
-	my $s=shift;
-	my ($commitid)=@_;
-	die "commitid already set"
-	  if $$s[Commitid];
-	$$s[Commitid]=$commitid
+        my $s=shift;
+        my ($commitid)=@_;
+        die "commitid already set"
+          if $$s[Commitid];
+        $$s[Commitid]=$commitid
     }
 
     use Chj::FP::lazy;
     sub message {
-	my $s=shift;
-	Delay {
-	    if ($$s[Commitid]) {
-		# to be added to git commit for the cluster
-		[ "-C",$$s[Commitid] ]
-	    } else {
-		my $msg= "missing commitid for patchfile $$s[Filename]";
-		if ($opt_dry) {
-		    _MissingCommitidError->new($msg)
-		} else {
-		    # would fail too but only after giving the
-		    # stringified representation to git
-		    die $msg
-		}
-	    }
-	}
+        my $s=shift;
+        Delay {
+            if ($$s[Commitid]) {
+                # to be added to git commit for the cluster
+                [ "-C",$$s[Commitid] ]
+            } else {
+                my $msg= "missing commitid for patchfile $$s[Filename]";
+                if ($opt_dry) {
+                    _MissingCommitidError->new($msg)
+                } else {
+                    # would fail too but only after giving the
+                    # stringified representation to git
+                    die $msg
+                }
+            }
+        }
     }
 
     sub get_orig_message {
-	my $s=shift;
-	# read message from original commit
-	if (my $id= $$s[Commitid]) {
-	    use Chj::Git::Functions;
-	    my $rf= Chj::Git::Functions::maybe_cat_file("commit",$id)
-	      or die "could not get commit message for '$id'";
-	    $$rf=~ s/.*?\n\n//s
-	      or die "cannot match to strip headers from '$$rf'";
-	    $$rf
-	} else {
-	    my $msg= "missing commitid for patchfile $$s[Filename]";
-	    if ($opt_dry) {
-		_MissingCommitidError->new($msg)
-	    } else {
-		# would fail too but only after giving the stringified
-		# representation to git
-		die $msg
-	    }
-	}
+        my $s=shift;
+        # read message from original commit
+        if (my $id= $$s[Commitid]) {
+            use Chj::Git::Functions;
+            my $rf= Chj::Git::Functions::maybe_cat_file("commit",$id)
+              or die "could not get commit message for '$id'";
+            $$rf=~ s/.*?\n\n//s
+              or die "cannot match to strip headers from '$$rf'";
+            $$rf
+        } else {
+            my $msg= "missing commitid for patchfile $$s[Filename]";
+            if ($opt_dry) {
+                _MissingCommitidError->new($msg)
+            } else {
+                # would fail too but only after giving the stringified
+                # representation to git
+                die $msg
+            }
+        }
     }
 
     sub headers {
-	my $s=shift;
-	$$s[Headers] ||= do {
-	    use Chj::xopen ();
-	    my $headers={};
-	    my $lastkey;
-	    {
-		my $f= Chj::xopen::xopen_read $s->path;
-		local $_; # !!!!!!
-		while (<$f>) {
-		    chomp;
-		    last if /^$/;
-		    next if /^From /;
-		    if (/^\s+(.*)/) {
-			$$headers{$lastkey}[-1] .= "\n".$1;
-		    } elsif (my ($key,$val)= /^([\w-]+):\s*(.*)/) {
-			$lastkey=lc $key;
-			push @{$$headers{$lastkey}},$val;
-		    } else {
-			die "invalid header in file: '$_' ".$s->path;
-		    }
-		}
-		$f->xclose;
-	    }
-	    $headers
-	}
+        my $s=shift;
+        $$s[Headers] ||= do {
+            use Chj::xopen ();
+            my $headers={};
+            my $lastkey;
+            {
+                my $f= Chj::xopen::xopen_read $s->path;
+                local $_; # !!!!!!
+                while (<$f>) {
+                    chomp;
+                    last if /^$/;
+                    next if /^From /;
+                    if (/^\s+(.*)/) {
+                        $$headers{$lastkey}[-1] .= "\n".$1;
+                    } elsif (my ($key,$val)= /^([\w-]+):\s*(.*)/) {
+                        $lastkey=lc $key;
+                        push @{$$headers{$lastkey}},$val;
+                    } else {
+                        die "invalid header in file: '$_' ".$s->path;
+                    }
+                }
+                $f->xclose;
+            }
+            $headers
+        }
     }
 
     my $get_single_header_named= sub {
-	my ($name)= @_;
-	sub {
-	    my $s=shift;
-	    my $headers= $s->headers;
-	    my @res= @{$$headers{$name}||[]};
-	    @res == 1 ? $res[0] : do {
-		my $msg= @res ? "more than one" : "no";
-		die "contains $msg '$name' header: ".$s->path;
-	    }
-	}
+        my ($name)= @_;
+        sub {
+            my $s=shift;
+            my $headers= $s->headers;
+            my @res= @{$$headers{$name}||[]};
+            @res == 1 ? $res[0] : do {
+                my $msg= @res ? "more than one" : "no";
+                die "contains $msg '$name' header: ".$s->path;
+            }
+        }
     };
 
     sub author_date; *author_date= $get_single_header_named->("date");
     sub author; *author= $get_single_header_named->("from");
     sub author_name_and_email {
-	my $s=shift;
-	my $author= $s->author;
-	my ($name, $mail)= $author=~ m/^\s*(.*?)\s*<([^<>]+)>\s*$/
-	  or die "no match on author '$author'";
-	($name, $mail)
+        my $s=shift;
+        my $author= $s->author;
+        my ($name, $mail)= $author=~ m/^\s*(.*?)\s*<([^<>]+)>\s*$/
+          or die "no match on author '$author'";
+        ($name, $mail)
     }
 
     use Chj::Git::Functions;
     sub apply {
-	my $s=shift;
-	main::xgit_do_hack "am", "-3", $s->path;
-	# ^ does not output the new commitid in a clear way, thus:
-	my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
-	$s->set_commitid ($commitid);
+        my $s=shift;
+        main::xgit_do_hack "am", "-3", $s->path;
+        # ^ does not output the new commitid in a clear way, thus:
+        my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
+        $s->set_commitid ($commitid);
     }
     end Class::Array;
 }
@@ -236,19 +236,19 @@ sub xgit_do_hack;
     sub is_command { 1 }
 
     sub new {
-	my $cl=shift;
-	@_==1 or die "wrong number of arguments";
-	bless [@_],$cl
+        my $cl=shift;
+        @_==1 or die "wrong number of arguments";
+        bless [@_],$cl
     }
 
     sub desc {
-	my $s=shift;
-	'% ' . $s->commandline
+        my $s=shift;
+        '% ' . $s->commandline
     }
 
     sub apply {
-	my $s=shift;
-	xxsystem $s->commandline;
+        my $s=shift;
+        xxsystem $s->commandline;
     }
 
     end Class::Array;
@@ -268,182 +268,182 @@ sub xgit_do_hack;
       );
 
     sub new {
-	my $cl=shift;
-	my ($line)=@_;
-	my $s=$cl->SUPER::new;
-	$$s[Line]=$line;
-	$$s[Items]=[];
-	$s
+        my $cl=shift;
+        my ($line)=@_;
+        my $s=$cl->SUPER::new;
+        $$s[Line]=$line;
+        $$s[Items]=[];
+        $s
     }
 
     sub set_message_from_path {
-	my $s=shift;
-	@_==1 or die;
-	my ($path)=@_;
-	die "message already set"
-	  if $$s[Message];
-	use Chj::xopen 'xopen_read';
-	my $f=xopen_read $path;
-	$$s[Message]= $f->xcontent;
-	$f->xclose;
+        my $s=shift;
+        @_==1 or die;
+        my ($path)=@_;
+        die "message already set"
+          if $$s[Message];
+        use Chj::xopen 'xopen_read';
+        my $f=xopen_read $path;
+        $$s[Message]= $f->xcontent;
+        $f->xclose;
     }
 
     sub add_item {
-	my $s=shift;
-	undef $$s[_Patches];
-	undef $$s[_Commands];
-	push @{$$s[Items]},@_
+        my $s=shift;
+        undef $$s[_Patches];
+        undef $$s[_Commands];
+        push @{$$s[Items]},@_
     }
 
     sub patches {
-	my $s=shift;
-	$$s[_Patches] ||=
-	  [ grep { $_->is_patch } @{$$s[Items]} ];
+        my $s=shift;
+        $$s[_Patches] ||=
+          [ grep { $_->is_patch } @{$$s[Items]} ];
     }
 
     sub has_patches {
-	my $s=shift;
-	@{ $s->patches } > 0
+        my $s=shift;
+        @{ $s->patches } > 0
     }
 
     sub commands {
-	my $s=shift;
-	$$s[_Commands] ||=
-	  [ grep { $_->is_command } @{$$s[Items]} ];
+        my $s=shift;
+        $$s[_Commands] ||=
+          [ grep { $_->is_command } @{$$s[Items]} ];
     }
 
     sub has_commands {
-	my $s=shift;
-	@{ $s->commands } > 0
+        my $s=shift;
+        @{ $s->commands } > 0
     }
 
     sub perhaps_singlepatch {
-	my $s=shift;
-	my $ps= $s->patches;
-	@$ps == 1 ? $$ps[0] : ()
+        my $s=shift;
+        my $ps= $s->patches;
+        @$ps == 1 ? $$ps[0] : ()
     }
 
     sub is_empty { # really empty (nothing to apply to history),
                    # regardless of kind of item
-	my $s=shift;
-	not @{$$s[Items]}
+        my $s=shift;
+        not @{$$s[Items]}
     }
 
     sub perhaps_the_patch_that {
-	# incl. sanitation, i.e. throws exception if more than one
-	# leader is present
-	my $s=shift;
-	my ($method)=@_;
-	my @leaders= grep { $_->$method } @{$s->patches};
-	@leaders==1 ? $leaders[0]
-	  : @leaders ?
-	    die "more than one $method patch selected"
-	      : ();
+        # incl. sanitation, i.e. throws exception if more than one
+        # leader is present
+        my $s=shift;
+        my ($method)=@_;
+        my @leaders= grep { $_->$method } @{$s->patches};
+        @leaders==1 ? $leaders[0]
+          : @leaders ?
+            die "more than one $method patch selected"
+              : ();
     }
 
     use Date::Parse ();
     sub perhaps_author_date { # -> perhaps (git time format)
-	my $s=shift;
-	return ()
-	  unless $s->has_patches;
-	if (my ($leader)= $s->perhaps_the_patch_that ("is_time_leader")) {
-	    $leader->author_date
-	} else {
-	    # select the *latest* author_date of all patches.
-	    my @p= map {
-		[
-		 ((scalar Date::Parse::str2time($_))
-		  || die "invalid time?: '$_'"),
-		 $_
-		]
-	    } map {
-		$_->author_date
-	    } @{$s->patches};
+        my $s=shift;
+        return ()
+          unless $s->has_patches;
+        if (my ($leader)= $s->perhaps_the_patch_that ("is_time_leader")) {
+            $leader->author_date
+        } else {
+            # select the *latest* author_date of all patches.
+            my @p= map {
+                [
+                 ((scalar Date::Parse::str2time($_))
+                  || die "invalid time?: '$_'"),
+                 $_
+                ]
+            } map {
+                $_->author_date
+            } @{$s->patches};
 
-	    (sort {
-		$$a[0] cmp $$b[0]
-	    } @p)[-1][1]
-	}
+            (sort {
+                $$a[0] cmp $$b[0]
+            } @p)[-1][1]
+        }
     }
 
     sub perhaps_author {
-	my $s=shift;
-	return ()
-	    unless $s->has_patches;
-	if (my ($leader)= $s->perhaps_the_patch_that ("is_author_leader")) {
-	    $leader->author
-	} else {
-	    my @_authors= map {
-		$_->author
-	    } @{$s->patches};
-	    my %authors= map {
-		$_ => 1
-	    } @_authors;
-	    my @authors= keys %authors;
-	    if (@authors==1) {
-		$authors[0]
-	    } else {
-		warn "**NOTE**: more than one author in cluster on line "
-		    .($s->line).", maybe specify 'a' on a patch:\n"
-		    .join("", sort map { "          $_\n" } @authors);
-		()
-	    }
-	}
+        my $s=shift;
+        return ()
+            unless $s->has_patches;
+        if (my ($leader)= $s->perhaps_the_patch_that ("is_author_leader")) {
+            $leader->author
+        } else {
+            my @_authors= map {
+                $_->author
+            } @{$s->patches};
+            my %authors= map {
+                $_ => 1
+            } @_authors;
+            my @authors= keys %authors;
+            if (@authors==1) {
+                $authors[0]
+            } else {
+                warn "**NOTE**: more than one author in cluster on line "
+                    .($s->line).", maybe specify 'a' on a patch:\n"
+                    .join("", sort map { "          $_\n" } @authors);
+                ()
+            }
+        }
     }
 
     use Chj::FP::lazy;
     sub maybe_msgoptions_promise {
-	# either false if message does not need to be changed,
-	# or a promise of an array of options to be fed to git.
-	my $s=shift;
-	my $prefix= defined ($$s[Maybe_prefix]) ? $$s[Maybe_prefix] : "";
-	if ($$s[Message]) {
-	    Delay { ["-m", $prefix . $$s[Message] ] }
-	      # Delay just for consistency, so that I can Force
-	      # it. (Should use FP::Lazy instead or so)
-	} else {
-	    if (my ($leader)= $s->perhaps_the_patch_that ("is_message_leader")) {
-		if (length $prefix) {
-		    Delay {
-			[ "-m",
-			  $prefix . ($leader->get_orig_message) ]
-		    }
-		} else {
-		    $leader->message
-		}
-	    } else {
-		if (my ($thepatch)= $s->perhaps_singlepatch) {
-		    if (length $prefix) {
-			Delay {
-			    [ "-m",
-			      $prefix . ($thepatch->get_orig_message) ]
-			}
-		    } else {
-			if (@{$s->items} == 1) {
-			    # optimization: no need to reset --soft
-			    # and re-commit
-			    undef
-			} else {
-			    # single patch, but also shell commands
-			    Delay { [ "-m", $thepatch->get_orig_message ] }
-			}
-		    }
-		} elsif (not $s->has_patches) {
-		    undef
-		} else {
-		    my $msg="Cluster starting at line $$s[Line]: ".
-		      "neither leader patch indication nor ".
-			"explicit message given";
-		    #new _NoCommitmsgError ;
-		    # XX find something better. right now it's broken
-		    # as it is not checked in "check" anymore, and on
-		    # "patch" it will feed that to Force and break
-		    # this way. !
+        # either false if message does not need to be changed,
+        # or a promise of an array of options to be fed to git.
+        my $s=shift;
+        my $prefix= defined ($$s[Maybe_prefix]) ? $$s[Maybe_prefix] : "";
+        if ($$s[Message]) {
+            Delay { ["-m", $prefix . $$s[Message] ] }
+              # Delay just for consistency, so that I can Force
+              # it. (Should use FP::Lazy instead or so)
+        } else {
+            if (my ($leader)= $s->perhaps_the_patch_that ("is_message_leader")) {
+                if (length $prefix) {
+                    Delay {
+                        [ "-m",
+                          $prefix . ($leader->get_orig_message) ]
+                    }
+                } else {
+                    $leader->message
+                }
+            } else {
+                if (my ($thepatch)= $s->perhaps_singlepatch) {
+                    if (length $prefix) {
+                        Delay {
+                            [ "-m",
+                              $prefix . ($thepatch->get_orig_message) ]
+                        }
+                    } else {
+                        if (@{$s->items} == 1) {
+                            # optimization: no need to reset --soft
+                            # and re-commit
+                            undef
+                        } else {
+                            # single patch, but also shell commands
+                            Delay { [ "-m", $thepatch->get_orig_message ] }
+                        }
+                    }
+                } elsif (not $s->has_patches) {
+                    undef
+                } else {
+                    my $msg="Cluster starting at line $$s[Line]: ".
+                      "neither leader patch indication nor ".
+                        "explicit message given";
+                    #new _NoCommitmsgError ;
+                    # XX find something better. right now it's broken
+                    # as it is not checked in "check" anymore, and on
+                    # "patch" it will feed that to Force and break
+                    # this way. !
 
-		    die $msg
-		}
-	    }
-	}
+                    die $msg
+                }
+            }
+        }
     }
 
     end Class::Array;
@@ -471,57 +471,57 @@ while (<$listfh>) {
     $line++;
     next if /^\s*#/;
     if (/^([*"ta]*)(\d+(?:\w+)?-.+)/) {
-	my ($is_some_leader,$path)=($1,$2);
-	# a squash. extend existing cluster.
-	my $p= Patch->new ($basedir,
-			   $path,
-			   # message leader:
-			   scalar
-			   ($is_some_leader
-			    and $is_some_leader=~ /[*"]/),
-			   # time leader:
-			   scalar
-			   ($is_some_leader
-			    and $is_some_leader=~ /[*t]/),
-			   # author leader:
-			   scalar
-			   ($is_some_leader
-			    and $is_some_leader=~ /[*a]/));
-	$curcluster->add_item ($p);
+        my ($is_some_leader,$path)=($1,$2);
+        # a squash. extend existing cluster.
+        my $p= Patch->new ($basedir,
+                           $path,
+                           # message leader:
+                           scalar
+                           ($is_some_leader
+                            and $is_some_leader=~ /[*"]/),
+                           # time leader:
+                           scalar
+                           ($is_some_leader
+                            and $is_some_leader=~ /[*t]/),
+                           # author leader:
+                           scalar
+                           ($is_some_leader
+                            and $is_some_leader=~ /[*a]/));
+        $curcluster->add_item ($p);
     } elsif (/^\%\s*(.*?)\s*$/s) {
-	# a shell command
-	$curcluster->add_item (Command->new ($1));
+        # a shell command
+        $curcluster->add_item (Command->new ($1));
     } elsif (/^\s*$/) {
-	# a new cluster.
-	end_cluster;
-	$curcluster= new Cluster ($line);
+        # a new cluster.
+        end_cluster;
+        $curcluster= new Cluster ($line);
     } elsif (/^(\d+)$/) {
-	my $path=$1;
-	# a message file
-	warn "actually untested";
-	$curcluster->set_message_from_path ($path);
+        my $path=$1;
+        # a message file
+        warn "actually untested";
+        $curcluster->set_message_from_path ($path);
     } elsif (/^prefix: ?(.*)/) {
-	# not trimming whitespace (other than that single expected space),
-	# and not adding ": ". have to do that yourself, ok?
-	$curcluster->set_maybe_prefix ($1);
+        # not trimming whitespace (other than that single expected space),
+        # and not adding ": ". have to do that yourself, ok?
+        $curcluster->set_maybe_prefix ($1);
     } elsif (/^\[\s*$/) {
-	# inline commit message
-	my @c;
-	while (<$listfh>) {
-	    chomp;
-	    $line++;#!
-	    if (/^\]\s*(?:#.*)?$/) {
-		last;
-	    }
-	    if (/^#/) {
-		warn "NOTE: comments inside commit message: '$_'\n";
-	    }
-	    push @c, $_
-	}
-	$curcluster->set_message
-	  (join ("\n", map { my $s=$_; $s=~ s/\s+\z//; $s } @c));
+        # inline commit message
+        my @c;
+        while (<$listfh>) {
+            chomp;
+            $line++;#!
+            if (/^\]\s*(?:#.*)?$/) {
+                last;
+            }
+            if (/^#/) {
+                warn "NOTE: comments inside commit message: '$_'\n";
+            }
+            push @c, $_
+        }
+        $curcluster->set_message
+          (join ("\n", map { my $s=$_; $s=~ s/\s+\z//; $s } @c));
     } else {
-	die "no match for '$_'";
+        die "no match for '$_'";
     }
 }
 end_cluster;
@@ -530,16 +530,16 @@ $listfh->xclose;
 sub check {
     my $errs=0;
     for my $c (@clusters) {
-	# ugly COPY from apply.
-	for my $p (@{$c->patches}) {
-	    #$p->apply($basedir);
-	    #now we calculate paths anyway ourselves?? ~td:
-	    my $path= $basedir."/".$p->filename;
-	    -e $path or do {
-		warn "patch file '$path' missing\n";
-		$errs++;
-	    };
-	}
+        # ugly COPY from apply.
+        for my $p (@{$c->patches}) {
+            #$p->apply($basedir);
+            #now we calculate paths anyway ourselves?? ~td:
+            my $path= $basedir."/".$p->filename;
+            -e $path or do {
+                warn "patch file '$path' missing\n";
+                $errs++;
+            };
+        }
     }
     $errs
 }
@@ -552,47 +552,47 @@ sub apply {
                     # file (similar? to dry-run)
 
     for my $cluster (@clusters) {
-	my $applypatches=sub {
-	    for my $p (@{$cluster->items}) {
-		print "==== ".$p->desc." ====\n";
-		$p->apply;
-	    }
-	};
-	if (my $msgoptions= $cluster->maybe_msgoptions_promise) {
-	    unless ($early) {
-		my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
-		&$applypatches();
-		main::xgit_do_hack "reset", "--soft", $oldhead;
-	    }
-	    my @moreoptions=
-	      (
-	       do {
-		   if (my ($author_date)= $cluster->perhaps_author_date) {
-		       ("--date", $author_date)
-		   } else {
-		       # '%' command only, no patches
-		       ()
-		   }
-	       },
-	       do {
-		   if (my ($author)= $cluster->perhaps_author) {
-		       ("--author", $author)
-		   } else {
-		       ()
-		   }
-	       }
-	      );
-	    unless ($early) {
-		main::xgit_do_hack "commit", "-a",
-		    @{Force $msgoptions}, @moreoptions;
-	    }
-	} else {
-	    # "message does not need to be changed" (singlepatch [or
-	    # not has_patches])
-	    unless ($early) {
-		&$applypatches();
-	    }
-	}
+        my $applypatches=sub {
+            for my $p (@{$cluster->items}) {
+                print "==== ".$p->desc." ====\n";
+                $p->apply;
+            }
+        };
+        if (my $msgoptions= $cluster->maybe_msgoptions_promise) {
+            unless ($early) {
+                my $oldhead= Chj::Git::Functions::xgit_rev_parse "HEAD";
+                &$applypatches();
+                main::xgit_do_hack "reset", "--soft", $oldhead;
+            }
+            my @moreoptions=
+              (
+               do {
+                   if (my ($author_date)= $cluster->perhaps_author_date) {
+                       ("--date", $author_date)
+                   } else {
+                       # '%' command only, no patches
+                       ()
+                   }
+               },
+               do {
+                   if (my ($author)= $cluster->perhaps_author) {
+                       ("--author", $author)
+                   } else {
+                       ()
+                   }
+               }
+              );
+            unless ($early) {
+                main::xgit_do_hack "commit", "-a",
+                    @{Force $msgoptions}, @moreoptions;
+            }
+        } else {
+            # "message does not need to be changed" (singlepatch [or
+            # not has_patches])
+            unless ($early) {
+                &$applypatches();
+            }
+        }
     }
 }
 
@@ -604,17 +604,17 @@ if ($errors) {
     exit 1;
 } else {
     if ($opt_dry) {
-	print "no errors in input file; ".
-	  "not running because in dry-run mode.\n";
-	# NOTE: dry mode does not check for missing cluster titles and
-	# such! Pointless?!!! Implemented new early checking behaviour
-	# instead (--no-early).
+        print "no errors in input file; ".
+          "not running because in dry-run mode.\n";
+        # NOTE: dry mode does not check for missing cluster titles and
+        # such! Pointless?!!! Implemented new early checking behaviour
+        # instead (--no-early).
     } else {
-	unless ($opt_no_early) {
-	    apply 1;
-	}
-	apply 0;
-	print "Ok.\n";
+        unless ($opt_no_early) {
+            apply 1;
+        }
+        apply 0;
+        print "Ok.\n";
     }
 }
 

@@ -41,15 +41,15 @@ our $verbose=0;
 #our $opt_dry;
 our $opt_cont;
 GetOptions("verbose"=> \$verbose,
-	   "help"=> sub{usage},
-	   "cont"=> \$opt_cont,
-	   #"dry-run"=> \$opt_dry,
-	   ) or exit 1;
+           "help"=> sub{usage},
+           "cont"=> \$opt_cont,
+           #"dry-run"=> \$opt_dry,
+           ) or exit 1;
 if (@ARGV) {
     if ($opt_cont) {
-	usage "either give commits, or --cont, not both"
+        usage "either give commits, or --cont, not both"
     } else {
-	# ok
+        # ok
     }
 } else {
     usage unless $opt_cont
@@ -72,10 +72,10 @@ sub reset_hard {
 sub xgit_do_hack_reset;
 *xgit_do_hack_reset=
   make_xgit_do_hack (sub {
-			 my ($gitdir)=@_;
-			 reset_hard ($gitdir);
-			 git_wait_lock $gitdir;
-		     });
+                         my ($gitdir)=@_;
+                         reset_hard ($gitdir);
+                         git_wait_lock $gitdir;
+                     });
 
 
 # hm get patch file incl name, sigh, we had this once didn't we ?
@@ -112,13 +112,13 @@ sub max_number_in {
     my ($glob,$bn_re)=@_;
     my $m=-1;
     for (glob $glob) {
-	my $bn=basename $_;
-	if ($bn=~ m/$bn_re/) {
-	    my $n=$1;
-	    if ($n > $m) {
-		$m= $n
-	    }
-	}
+        my $bn=basename $_;
+        if ($bn=~ m/$bn_re/) {
+            my $n=$1;
+            if ($n > $m) {
+                $m= $n
+            }
+        }
     }
     $m+0
       # decimal
@@ -127,7 +127,7 @@ sub max_number_in {
 
 my $last_patchno=
   max_number_in ("max_number_in$CJ_GIT_PATCHTOOL_BASEDIR/????-*",
-		 qr/^(\d{4})-/);
+                 qr/^(\d{4})-/);
 sub next_patchno_str {
     $last_patchno++;
     sprintf("%04d",$last_patchno)
@@ -145,32 +145,32 @@ sub pick {
     # first try:
     my $cnt;
     if (eval {
-	#xgit_do_hack_reset "cherry-pick", $commit;
-	##sgh what does xgit_do_hack_reset all do for me again?
-	my $in= Chj::IO::Command->new_combinedsender("git","cherry-pick", $commit);
-	$cnt=$in->xcontent;
-	$in->xxfinish;
-	# XXX ^ if that excepts, then  how clean up, not at all?
-	1; #don't forget!!
+        #xgit_do_hack_reset "cherry-pick", $commit;
+        ##sgh what does xgit_do_hack_reset all do for me again?
+        my $in= Chj::IO::Command->new_combinedsender("git","cherry-pick", $commit);
+        $cnt=$in->xcontent;
+        $in->xxfinish;
+        # XXX ^ if that excepts, then  how clean up, not at all?
+        1; #don't forget!!
     }) {
-	# ok done
+        # ok done
     } else {
-	if ($cnt=~ /nothing to commit/) {
-	    # XX ^ safer check?
-	    warn "pick: commit seems already applied, ignoring: $commit\n";
-	} else {
-	    reset_hard;
+        if ($cnt=~ /nothing to commit/) {
+            # XX ^ safer check?
+            warn "pick: commit seems already applied, ignoring: $commit\n";
+        } else {
+            reset_hard;
 
-	    # get patch file incl path:
-	    my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
-	    my $fn= basename $path;
-	    my $no= next_patchno_str;
-	    $fn=~ s/^\d{4}-/$no-/;
-	    my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
-	    xlinkunlink $path, $targetpath;
+            # get patch file incl path:
+            my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
+            my $fn= basename $path;
+            my $no= next_patchno_str;
+            $fn=~ s/^\d{4}-/$no-/;
+            my $targetpath= "$CJ_GIT_PATCHTOOL_BASEDIR/$fn";
+            xlinkunlink $path, $targetpath;
 
-	    push @targets, bless [$commit,$fn,$targetpath], "CHJ_pick::Target";
-	}
+            push @targets, bless [$commit,$fn,$targetpath], "CHJ_pick::Target";
+        }
     }
 }
 
@@ -183,19 +183,19 @@ sub pick {
 sub commit {
     my ($prefix, @targets)=@_;
     if (my $pid= xfork) {
-	xxwaitpid $pid,0;
+        xxwaitpid $pid,0;
     } else {
-	xchdir $CJ_GIT_PATCHTOOL_BASEDIR;
+        xchdir $CJ_GIT_PATCHTOOL_BASEDIR;
 
-	xgit_do "add", map { $$_[1]} @targets;
+        xgit_do "add", map { $$_[1]} @targets;
 
-	# usually single line, so?:
-	my $msg= join ("", map {"$prefix $_\n"}
-		       map { "$$_[0] = $$_[1]"} @targets);
-	xgit_do "commit", "-m", $msg,
-	  map { $$_[1]} @targets;
+        # usually single line, so?:
+        my $msg= join ("", map {"$prefix $_\n"}
+                       map { "$$_[0] = $$_[1]"} @targets);
+        xgit_do "commit", "-m", $msg,
+          map { $$_[1]} @targets;
 
-	exit 0;
+        exit 0;
     }
 }
 
@@ -203,31 +203,31 @@ sub apply {
     my ($target)=@_;
     my ($commit,$fn,$targetpath)=@$target;
     if (eval {
-	xgit_do_hack_reset "am", "-3", $targetpath;
-	1
+        xgit_do_hack_reset "am", "-3", $targetpath;
+        1
     }) {
-	# well, "am" succeeded, what do we want more.
+        # well, "am" succeeded, what do we want more.
     } else {
-	my $e=$@;
-	#if ($e=~ )
-	#well, it failed, that's enough isn't it ?
-	#so, try wig now,
-	xxsystem "wig", $fn;
-	# so, wig succeeded, commit again
-	commit "wig", $target;
-	# and, apply it, now that it should apply cleanly
-	reset_hard;
-	xgit_do_hack_reset "am", "-3" $targetpath;
+        my $e=$@;
+        #if ($e=~ )
+        #well, it failed, that's enough isn't it ?
+        #so, try wig now,
+        xxsystem "wig", $fn;
+        # so, wig succeeded, commit again
+        commit "wig", $target;
+        # and, apply it, now that it should apply cleanly
+        reset_hard;
+        xgit_do_hack_reset "am", "-3" $targetpath;
     }
 }
 
 sub apply_targets {
     while (@targets) {
-	# abort on first error, thus save @targets for --cont in case
-	# we crash
-	savestate \@targets;
-	my $target= shift @targets;
-	apply $target;
+        # abort on first error, thus save @targets for --cont in case
+        # we crash
+        savestate \@targets;
+        my $target= shift @targets;
+        apply $target;
     }
     savestate [];
 }
@@ -236,47 +236,47 @@ sub apply_targets {
 if ($opt_cont) {
     @targets= @{ loadstate() };
     if (@targets) {
-	my $diff= Chj::IO::Command->new_sender("git","diff","HEAD");
-	if (defined (my $firstline = $diff->xreadline)) {
-	    my $target= shift @targets;
-	    my $targetpath= $target->path;
-	    my $oldpatch= xopen_read $targetpath;
-	    my $newpatch= xtmpfile $targetpath;
-	  LOOP: {
-		while (<$oldpatch>) {
-		    ## the following is probably not safe (against
-		    ## such string in commit msg)
-		    if (m{^diff --git a/}) {
-			# finished with old stuff;
-			$newpatch->xprint($firstline);
-			## I've got xsendfile_to but is it buffer safe?
-			while (<$diff>) {
-			    $newpatch->xprint($_);
-			}
-			$oldpatch->xclose;
-			$newpatch->xclose;
-			$newpatch->xputback;
-			last LOOP;
-		    } else {
-			$newpatch->xprint($_);
-		    }
-		}
-		die "got eof without finding a diff in patch file: '$targetpath'";
-	    }
-	    savestate \@targets; #or after commit?
-	    commit "--cont", $target;
-	    reset_hard;
-	    apply $target;
-	    apply_targets;
-	} else {
-	    # --cont but no diff
-	    $diff->xxfinish;
-	    ## hm, just continue applying targets?
-	    ## drop one?
-	    apply_targets;
-	}
+        my $diff= Chj::IO::Command->new_sender("git","diff","HEAD");
+        if (defined (my $firstline = $diff->xreadline)) {
+            my $target= shift @targets;
+            my $targetpath= $target->path;
+            my $oldpatch= xopen_read $targetpath;
+            my $newpatch= xtmpfile $targetpath;
+          LOOP: {
+                while (<$oldpatch>) {
+                    ## the following is probably not safe (against
+                    ## such string in commit msg)
+                    if (m{^diff --git a/}) {
+                        # finished with old stuff;
+                        $newpatch->xprint($firstline);
+                        ## I've got xsendfile_to but is it buffer safe?
+                        while (<$diff>) {
+                            $newpatch->xprint($_);
+                        }
+                        $oldpatch->xclose;
+                        $newpatch->xclose;
+                        $newpatch->xputback;
+                        last LOOP;
+                    } else {
+                        $newpatch->xprint($_);
+                    }
+                }
+                die "got eof without finding a diff in patch file: '$targetpath'";
+            }
+            savestate \@targets; #or after commit?
+            commit "--cont", $target;
+            reset_hard;
+            apply $target;
+            apply_targets;
+        } else {
+            # --cont but no diff
+            $diff->xxfinish;
+            ## hm, just continue applying targets?
+            ## drop one?
+            apply_targets;
+        }
     } else {
-	die "pick --cont: there is nothing left to do.\n";
+        die "pick --cont: there is nothing left to do.\n";
     }
 } else {
     # new run
