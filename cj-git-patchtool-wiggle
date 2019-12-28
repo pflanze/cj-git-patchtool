@@ -96,9 +96,11 @@ my $rej= do {
                 # print?
                 print "NOTE: $_\n";
             } elsif (/^patch: .* malformed patch at/) {
-                # handedited patch, from xemacs, hum. anyway, hope it will be fixed by wiggle.
+                # handedited patch, from xemacs, hum. anyway, hope it
+                # will be fixed by wiggle.
                 print "NOTE: $_\n";
-                #hm. but die anyway, it seems patch does not produce an actual rej file then!
+                #hm. but die anyway, it seems patch does not produce
+                #an actual rej file then!
                 die "cannot proceed";
             } elsif ($_ eq '') {
                 #eh.whatever
@@ -122,7 +124,9 @@ my $rej= do {
         $r->xclose;
         $w->xdup2(1);
         $w->xdup2(2);
-        my $p= Chj::IO::Command->new_receiver("patch","--ignore-whitespace","-p1");
+        my $p= Chj::IO::Command->new_receiver("patch",
+                                              "--ignore-whitespace",
+                                              "-p1");
         $oldpatch->xsendfile_to ($p);
         $oldpatch->xclose;
         $p->xfinish;
