@@ -174,8 +174,7 @@ sub pick {
     }
 }
 
-{
-    package CHJ_pick::Target;
+package CHJ_pick::Target {
     use Class::Array -fields=> -publica=> qw(commit filename path);
     end CHJ_pick::Target;
 }

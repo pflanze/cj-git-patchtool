@@ -40,8 +40,7 @@ usage unless @ARGV==1;
 
 our ($listfile)=@ARGV;
 
-{
-    package _Error;
+package _Error {
     sub new {
         my $cl=shift;
         @_==1 or die "expect 1 arg";
@@ -53,12 +52,10 @@ our ($listfile)=@ARGV;
         $$s
     }
 }
-{
-    package _NoCommitmsgError;
+package _NoCommitmsgError {
     our @ISA=("_Error");
 }
-{
-    package _MissingCommitidError;
+package _MissingCommitidError {
     our @ISA=("_Error");
 }
 
@@ -76,8 +73,7 @@ sub xgit_do_hack;
        git_wait_lock ($base);
    });
 
-{
-    package ClusterItem;
+package ClusterItem {
     use Class::Array -fields=> -publica=>
       ();
     sub is_patch { 0 }
@@ -85,8 +81,7 @@ sub xgit_do_hack;
     end Class::Array;
 }
 
-{
-    package Patch;
+package Patch {
     use Class::Array -class=> 'ClusterItem', -extend=> -publica=>
       (
        'basedir',
@@ -226,8 +221,7 @@ sub xgit_do_hack;
     end Class::Array;
 }
 
-{
-    package Command;
+package Command {
     use Chj::xperlfunc 'xxsystem';
 
     use Class::Array -class=> 'ClusterItem', -extend=> -publica=>
@@ -255,8 +249,7 @@ sub xgit_do_hack;
 }
 
 
-{
-    package Cluster;
+package Cluster {
     use Class::Array -fields=> -publica=>
       (
        'line', #of the start, in source file.
