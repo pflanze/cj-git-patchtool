@@ -276,18 +276,6 @@ sub xgit_do_hack;
         $s
     }
 
-    sub set_message_from_path {
-        my $s=shift;
-        @_==1 or die;
-        my ($path)=@_;
-        die "message already set"
-          if $$s[Message];
-        use Chj::xopen 'xopen_read';
-        my $f=xopen_read $path;
-        $$s[Message]= $f->xcontent;
-        $f->xclose;
-    }
-
     sub add_item {
         my $s=shift;
         undef $$s[_Patches];
@@ -495,11 +483,6 @@ while (<$listfh>) {
         # a new cluster.
         end_cluster;
         $curcluster= new Cluster ($line);
-    } elsif (/^(\d+)$/) {
-        my $path=$1;
-        # a message file
-        warn "actually untested";
-        $curcluster->set_message_from_path ($path);
     } elsif (/^prefix: ?(.*)/) {
         # not trimming whitespace (other than that single expected space),
         # and not adding ": ". have to do that yourself, ok?
