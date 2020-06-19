@@ -8,7 +8,7 @@ use strict;
 use Getopt::Long;
 use Chj::Util::AskYN qw(maybe_askyn);
 use Chj::xpipe;
-use Chj::Unix::exitcode;
+use Chj::Unix::Exitcode;
 use Chj::xperlfunc;
 use Chj::xopen 'xopen_read';
 use Chj::xtmpfile;
