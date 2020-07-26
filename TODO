@@ -44,3 +44,6 @@
   somehow (i.e. make a single patch out of a group *before* the
   re-ordering)?
 
+- set GIT_COMMITTER_TIME to the same current time for the whole of an
+  `app` run.
+
