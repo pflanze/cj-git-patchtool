@@ -13,7 +13,6 @@ use Chj::xperlfunc;
 use Chj::xopen 'xopen_read';
 use Chj::xtmpfile;
 use Chj::IO::Command;
-use FP::Repl::Trap;
 
 sub hash_add ($$$) {
     my ($h,$k,$v)=@_;
