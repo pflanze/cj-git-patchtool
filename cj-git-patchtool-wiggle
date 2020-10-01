@@ -15,12 +15,9 @@ use Chj::xtmpfile;
 use Chj::IO::Command;
 use FP::Repl::Trap;
 
-
-sub hash_xadd ($$$) {
+sub hash_add ($$$) {
     my ($h,$k,$v)=@_;
-    die "key already in hash: '$k'"
-      if exists $$h{$k};
-    $$h{$k}= $v;
+    push @{$$h{$k}}, $v;
 }
 
 
@@ -171,7 +168,7 @@ sub parse_patch ($) {
     # ({ oldfilename=> ..,
     #    newfilename=> ..,
     #    lines=> [ lines.. ] }.. )
-    my $touchedfilename2part= {};
+    my $touchedfilename2parts= {};
     my $maybe_current_collector;
     while (<$in>) {
         if (my ($a,$b)= m{^diff --git a/(\S*) b/(\S*)}) {
@@ -185,8 +182,8 @@ sub parse_patch ($) {
                           newfilename=> $b,
                           lines=> $maybe_current_collector};
             push @diffparts, $part;
-            hash_xadd $touchedfilename2part, $a, $part;
-            hash_xadd $touchedfilename2part, $b, $part
+            hash_add $touchedfilename2parts, $a, $part;
+            hash_add $touchedfilename2parts, $b, $part
               unless $a eq $b;
         } else {
             if ($maybe_current_collector) {
@@ -198,7 +195,7 @@ sub parse_patch ($) {
     }
     +{ headlines=> \@headlines,
        diffparts=> \@diffparts,
-       touchedfilename2part=> $touchedfilename2part,
+       touchedfilename2parts=> $touchedfilename2parts,
      }
 }
 
@@ -229,11 +226,13 @@ sub parse_patch ($) {
         # $gitp->{touchedfilename2part}{$filename} to know whether wee
         # need to choose gitp, since if it wasn't wiggled, the git
         # diff will still have the file but as a deletion.
-        my $lines= ($wiggled{$filename} ?
-                    $gitp->{touchedfilename2part}{$filename} :
-                    $diffpart)
-          ->{lines};
-        $new->xprint(@$lines);
+        if ($wiggled{$filename}) {
+            for my $p (@{$gitp->{touchedfilename2parts}{$filename}}) {
+                $new->xprint(@{$p->{lines}});
+            }
+        } else {
+            $new->xprint(@{$diffpart->{lines}});
+        }
     }
     $new->xclose;
     $new->xputback;
