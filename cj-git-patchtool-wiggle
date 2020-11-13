@@ -9,7 +9,7 @@ use Getopt::Long;
 use Chj::Util::AskYN qw(maybe_askyn);
 use Chj::xpipe;
 use Chj::Unix::Exitcode;
-use Chj::xperlfunc;
+use Chj::xperlfunc ':all';
 use Chj::xopen 'xopen_read';
 use Chj::xtmpfile;
 use Chj::IO::Command;
@@ -148,7 +148,10 @@ for my $rejfile (@$rej) {
             unlink $porig;
         }
     }
+    my $stat= xlstat $file;
     my $res= xsystem "wiggle", "--replace", $file, $rejfile;
+    # reconstruct the x flag that wiggle dropped.
+    xchmod $stat->mode, $file;
     if ($res) {
         if (!maybe_askyn "wiggle exited with error code $res; continue? ") {
             die "stopped by user request.\n";
