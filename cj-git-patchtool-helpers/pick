@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # Sat Oct 29 01:47:21 EDT 2011
-(my $email='XXX%YYY,ch')=~ tr/%,/@./;
+(my $email='ch%christianjaeger,ch')=~ tr/%,/@./;
 
 use strict;
 
