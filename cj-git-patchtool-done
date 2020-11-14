@@ -4,14 +4,26 @@ set -euo pipefail
 IFS=
 # remember, *still* need to quote variables!
 
-if [ $# -ne 0 ]; then
+usage () {
     echo "usage: $0"
     echo "  Run from the shell in PATCHES/hostname-N/ when you're done "
     echo "  with the work from a run of cj-git-patchtool. Commits uncommitted"
     echo "  changes, compresses .git, removes files in working dir, to"
     echo "  minimize space usage."
     exit 1
+}
+
+if [ $# -ne 0 ]; then
+    usage
 fi
+
+{
+    pdir=$(basename "$(dirname "$(pwd)")")
+    if [ "$pdir" != "PATCHES" ]; then
+        echo "$0: not running under PATCHES/somedir/" >&2
+        usage
+    fi
+}
 
 status=`git status`
 
