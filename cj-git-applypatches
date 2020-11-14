@@ -5,6 +5,15 @@
 
 use strict;
 
+use Chj::Git::Functions qw(make_xgit_do_hack git_wait_lock xgit_do);
+use Chj::xperlfunc;
+use Chj::xopen 'xopen_read';
+use Date::Parse ();
+use Chj::xperlfunc 'dirname';
+use Chj::FP::lazy;
+use Chj::Backtrace;
+
+
 $0=~ /(.*?)([^\/]+)\z/s or die "?";
 my ($mydir, $myname)=($1,$2);
 sub usage {
@@ -59,9 +68,6 @@ package _MissingCommitidError {
     our @ISA=("_Error");
 }
 
-
-use Chj::Git::Functions qw(make_xgit_do_hack git_wait_lock xgit_do);
-use Chj::xperlfunc;
 
 sub xgit_do_hack;
 *xgit_do_hack= make_xgit_do_hack
@@ -141,7 +147,6 @@ package Patch {
         my $s=shift;
         # read message from original commit
         if (my $id= $$s[Commitid]) {
-            use Chj::Git::Functions;
             my $rf= Chj::Git::Functions::maybe_cat_file("commit",$id)
               or die "could not get commit message for '$id'";
             $$rf=~ s/.*?\n\n//s
@@ -162,7 +167,6 @@ package Patch {
     sub headers {
         my $s=shift;
         $$s[Headers] ||= do {
-            use Chj::xopen ();
             my $headers={};
             my $lastkey;
             {
@@ -210,7 +214,6 @@ package Patch {
         ($name, $mail)
     }
 
-    use Chj::Git::Functions;
     sub apply {
         my $s=shift;
         main::xgit_do_hack "am", "-3", "--ignore-whitespace", $s->path;
@@ -250,6 +253,8 @@ package Command {
 
 
 package Cluster {
+    use Chj::FP::lazy;
+
     use Class::Array -fields=> -publica=>
       (
        'line', #of the start, in source file.
@@ -322,7 +327,6 @@ package Cluster {
               : ();
     }
 
-    use Date::Parse ();
     sub perhaps_author_date { # -> perhaps (git time format)
         my $s=shift;
         return ()
@@ -372,7 +376,6 @@ package Cluster {
         }
     }
 
-    use Chj::FP::lazy;
     sub maybe_msgoptions_promise {
         # either false if message does not need to be changed,
         # or a promise of an array of options to be fed to git.
@@ -431,10 +434,7 @@ package Cluster {
 }
 
 
-use Chj::xperlfunc 'dirname';
 our $basedir= dirname $listfile;
-
-use Chj::xopen 'xopen_read';
 
 our $listfh= xopen_read $listfile;
 
@@ -520,9 +520,6 @@ sub check {
     $errs
 }
 
-use Chj::Git::Functions;
-use Chj::FP::lazy;
-
 sub apply {
     my ($early)=@_; # early means, just check for errors in the source
                     # file (similar? to dry-run)
@@ -594,6 +591,3 @@ if ($errors) {
     }
 }
 
-#use Chj::ruse;
-use Chj::Backtrace;
-#use Chj::repl; repl;
