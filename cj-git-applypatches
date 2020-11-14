@@ -1,9 +1,16 @@
 #!/usr/bin/perl -w
 
-# Thu Nov 26 22:53:32 EST 2009
-(my $email='ch%christianjaeger,ch')=~ tr/%,/@./;
-
 use strict;
+
+use Cwd 'abs_path';
+my ($mydir, $myname);
+BEGIN {
+    my $location = (-l $0) ? abs_path($0) : $0;
+    $location =~ /(.*?)([^\/]+)\z/s or die "?";
+    ($mydir, $myname) = ($1, $2);
+}
+
+use lib "$mydir/lib";
 
 use Chj::Git::Functions qw(make_xgit_do_hack git_wait_lock xgit_do);
 use Chj::xperlfunc;
@@ -12,10 +19,11 @@ use Date::Parse ();
 use Chj::xperlfunc 'dirname';
 use Chj::FP::lazy;
 use Chj::Backtrace;
+use Chj::Git::Patchtool 'git_commit_options';
 
 
-$0=~ /(.*?)([^\/]+)\z/s or die "?";
-my ($mydir, $myname)=($1,$2);
+(my $email='ch%christianjaeger,ch')=~ tr/%,/@./;
+
 sub usage {
     print STDERR map{"$_\n"} @_ if @_;
     print "$myname listfile
@@ -556,7 +564,7 @@ sub apply {
                }
               );
             unless ($early) {
-                main::xgit_do_hack "commit", "-a",
+                main::xgit_do_hack "commit", git_commit_options, "-a",
                     @{Force $msgoptions}, @moreoptions;
             }
         } else {
