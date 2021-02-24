@@ -162,7 +162,8 @@ sub pick {
             reset_hard;
 
             # get patch file incl path:
-            my $path= Chomp Xbacktick "git","format-patch", $commit."^..".$commit;
+            my $path= Chomp Xbacktick "git","format-patch", "--no-signature",
+                $commit."^..".$commit;
             my $fn= basename $path;
             my $no= next_patchno_str;
             $fn=~ s/^\d{4}-/$no-/;
