@@ -47,6 +47,3 @@
 - set GIT_COMMITTER_TIME to the same current time for the whole of an
   `app` run.
 
-- automatically strip the end of file part (signature) in patch files
-  that git format-patch creates (it confuses Emacs's diff mode).
-
