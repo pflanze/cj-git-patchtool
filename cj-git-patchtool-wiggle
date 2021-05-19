@@ -225,8 +225,7 @@ sub parse_patch ($) {
         # $gitp->{touchedfilename2part}{$filename} to know whether wee
         # need to choose gitp, since if it wasn't wiggled, the git
         # diff will still have the file but as a deletion.
-        if ($wiggled{$filename} and
-            my $ps= $gitp->{touchedfilename2parts}{$filename}) {
+        if (my $ps= $gitp->{touchedfilename2parts}{$filename}) {
             for my $p (@$ps) {
                 $new->xprint(@{$p->{lines}});
             }
