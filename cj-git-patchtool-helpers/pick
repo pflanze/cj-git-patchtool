@@ -1,9 +1,17 @@
 #!/usr/bin/perl -w
 
-# Sat Oct 29 01:47:21 EDT 2011
-(my $email='XXX%YYY,ch')=~ tr/%,/@./;
-
 use strict;
+
+use Cwd 'abs_path';
+my ($mydir, $myname);
+BEGIN {
+    my $location = (-l $0) ? abs_path($0) : $0;
+    $location =~ /(.*?)([^\/]+)\z/s or die "?";
+    ($mydir, $myname) = ($1, $2);
+}
+
+use lib "$mydir/lib";
+
 
 our $CJ_GIT_PATCHTOOL_BASEDIR= $ENV{CJ_GIT_PATCHTOOL_BASEDIR}
   or die "must be run from cj-git-patchtool shell";
@@ -12,6 +20,8 @@ $0=~ /(.*?)([^\/]+)\z/s or die "?";
 my ($mydir, $myname)=($1,$2);
 
 our $statusfile= "$CJ_GIT_PATCHTOOL_BASEDIR/.$myname.status";
+
+(my $email='ch%christianjaeger,ch')=~ tr/%,/@./;
 
 sub usage {
     print STDERR map{"$_\n"} @_ if @_;
