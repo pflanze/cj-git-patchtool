@@ -96,6 +96,8 @@ package ClusterItem {
 }
 
 package Patch {
+    use Chj::xperlfunc qw(xsymlink xunlink);
+    
     use Class::Array -class=> 'ClusterItem', -extend=> -publica=>
       (
        'basedir',
@@ -224,8 +226,12 @@ package Patch {
 
     sub apply {
         my $s=shift;
+        my $applying_path = $$s[Basedir] . "/_applying";
+        unlink $applying_path;
+        xsymlink $s->path, $applying_path;
         main::xgit_do_hack "am", "-3", "--ignore-whitespace", $s->path;
         # ^ does not output the new commitid in a clear way, thus:
+        xunlink $applying_path;
         my $commitid= Chj::Git::Functions::xgit_rev_parse "HEAD";
         $s->set_commitid ($commitid);
     }

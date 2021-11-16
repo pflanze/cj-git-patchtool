@@ -3,17 +3,17 @@
 set -eu
 
 usage () {
-    echo "$0 patchfilename"
-    echo "  runs cj-git-patchtool-wiggle \"\$CJ_GIT_PATCHTOOL_BASEDIR\" patchfilename"
+    echo "$0"
+    echo "  Try to apply the last failed patch via wiggle, updating"
+    echo "  the patch if successful."
     exit 1
 }
 
-if [ $# -ne 1 ]; then
-    usage
-fi
-if [ "$1" = "-h" -o "$1" = "--help" ]; then
+if [ $# -ne 0 ]; then
     usage
 fi
 
-cj-git-patchtool-wiggle "$CJ_GIT_PATCHTOOL_BASEDIR" "$1"
+file=$(readlink "$CJ_GIT_PATCHTOOL_BASEDIR"/_applying)
+
+cj-git-patchtool-wiggle "$file"
 
