@@ -31,11 +31,6 @@
 
 - binary files: at least stop with an error message
 
-- is there a bug with wig, that it doesn't `g-clean -f` files, so
-  patch complains about overwriting existing file or so ?  it didn't
-  do a patching in a unknown blobs case and I had to manually do it
-  but it was just a change of the blobs and line numbers, thus, huh.
-
 - in some situations, moving a patch will not lead to a conflict but
   to it being dropped without any error popping up (if the same patch
   and its reversal were before it, but now after it). This leads to

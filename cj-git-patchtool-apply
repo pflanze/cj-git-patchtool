@@ -2,8 +2,9 @@
 
 usage () {
     echo "usage: $0 basedir"
-    echo "  run with the basedir created with cj-git-patchtool-start"
-    echo "  CAREFUL: runs reset --hard and applies the patches"
+    echo "  Run with the basedir created with cj-git-patchtool-start."
+    echo "  CAREFUL: runs reset --hard and clean -fd, and applies"
+    echo "  the patches!"
     exit 1
 }
 
@@ -28,4 +29,5 @@ if [ -e "$gdir"/rebase-apply/ ]; then
 fi
 
 git reset --hard "$baseid"
+git clean -fd
 cj-git-applypatches "$basedir/_list"
