@@ -1,14 +1,18 @@
-- reuse original author as well, not only time, if it's the same for all patches. right?
+# Todo / open issues
 
-- handle CR vs CRLF etc gracefully somehow (repo with CRLF or something gives patches that don't apply)
+- reuse original author as well, not only time, if it's the same for
+  all patches. right?
 
-- wig should not remove newly created files out of a patchfile
+- handle CR vs CRLF etc gracefully somehow (repo with CRLF or
+  something gives patches that don't apply)
+
+- `wig` should not remove newly created files out of a patchfile
   (i.e. a patch creates new files, and has some conflict in a change
   to an existing file; wig will update the change to an existing file,
   but ditch the newly created files. fix that.)
 
-[- would it be possible to handle merge commits usefully? i.e. reuse
-  conflict merges that might already have been solved there.]
+- (would it be possible to handle merge commits usefully? i.e. reuse
+  conflict merges that might already have been solved there.)
 
 - "git am" fails with 'Patch does not have a valid e-mail address.' if
   the commit message body has a line that starts with 'from:'
