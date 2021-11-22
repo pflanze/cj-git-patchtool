@@ -141,7 +141,7 @@ history state without further ado. To apply the history, run:
 If the history applies cleanly, it will say "Ok" at the
 end. Otherwise, fix your _list, or if it's a conflict, try:
 
-    $ wig patchfilename  # only the filename, not the full path
+    $ wig
 
 This will run `wiggle` and if it worked, will save the resolved diff
 back to the patch file so that you don't have to run `wig` in
