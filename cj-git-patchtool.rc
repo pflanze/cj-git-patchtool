@@ -6,6 +6,6 @@ fi
 
 # actually basedir is possibly already part of PATH. But, to allow
 # just symlinking cj-git-patchtool instead, add it as well (again).
-PATH="$CJ_GIT_PATCHTOOL_SOURCEDIR/cj-git-patchtool-helpers:$CJ_GIT_PATCHTOOL_SOURCEDIR:$PATH"
+PATH="$CJ_GIT_PATCHTOOL_SOURCEDIR/helpers:$CJ_GIT_PATCHTOOL_SOURCEDIR:$PATH"
 
 PS1="$CJ_GIT_PATCHTOOL_BASEDIR $PS1"
