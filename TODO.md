@@ -46,3 +46,7 @@
 - set GIT_COMMITTER_TIME to the same current time for the whole of an
   `app` run.
 
+- check is broken right now; meaning, it will go actually applying
+  patches until it will die because of some errors in file (missing
+  msg ..)
+
