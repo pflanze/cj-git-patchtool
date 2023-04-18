@@ -29,11 +29,11 @@ then run `make cj-git-patchtool`.
 
 ### Manually
 
-* Install chj-bin and chj-perllib:
+* Install chj-scripts and chj-perllib:
 
         # cd /opt; mkdir chj; cd chj
         # git clone https://github.com/pflanze/chj-perllib.git perllib
-        # git clone https://github.com/pflanze/chj-bin.git bin
+        # git clone https://github.com/pflanze/chj-scripts.git bin
         # mkdir -p /usr/local/lib/site_perl/Class
         # ln -s /opt/chj/perllib/Chj /usr/local/lib/site_perl/
         # ln -s /opt/chj/perllib/Class/Array.pm /usr/local/lib/site_perl/Class
@@ -166,7 +166,7 @@ you ran `cj-git-patchtool-done` then you'll have to run `git reset
 
 ## Tips
 
-Use the `dupa` tool from chj-bin.git for duplicating patches (for
+Use the `dupa` tool from chj-scripts.git for duplicating patches (for
 splitting them)
 
 Use the `cj-git-filter-branch--add-emptytail` tool from the same place
