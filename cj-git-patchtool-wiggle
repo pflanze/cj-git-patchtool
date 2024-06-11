@@ -99,6 +99,17 @@ my $rej= do {
                 #hm. but die anyway, it seems patch does not produce
                 #an actual rej file then!
                 die "cannot proceed";
+            } elsif (my ($lineno) = /can't find file to patch at input line (\d+)/) {
+                # somehow patch reports the line after the one with
+                # the path (in addition to being 0-based)
+                $lineno--;
+                my $f = xopen_read $patchpath;
+                my @lines = $f->xreadline;
+                @lines >= $lineno or die "bug";
+                my $linestr = $lines[$lineno-1];
+                $linestr=~ s{^\+\+\+ b/}{} or die "bug";
+                my $filepath = $linestr;
+                die "can't find file to patch at '$patchpath' line $lineno: $filepath";
             } elsif ($_ eq '') {
                 #eh.whatever
             } else {
