@@ -113,6 +113,12 @@ Now edit the `_list`, adhering to these rules:
   starting with `prefix: ` and then a string; the string will be
   prepended to the commit message.
 
+* A line starting with `postfix: ` and then a string leads to the
+  string being appended to the commit message; `postfix-line: ` will
+  also append a newline to the message, and `postfix-paragraph: ` or
+  `postfix-para: ` will lead to two newlines, then the string, then a
+  newline to be appended.
+
 * A line that starts with `%` is taken to be a shell script to run at
   that point during application of the patch series.
 

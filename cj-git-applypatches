@@ -275,6 +275,7 @@ package Cluster {
        'message', # string
        'items', # array_of ClusterItem
        'maybe_prefix', # undef or string to be prepended to commit message
+       'maybe_postfix', # undef or string to be appended to commit message
        '_patches', # cache of items that are patches (premature opt?)
        '_commands', # dito
       );
@@ -394,27 +395,28 @@ package Cluster {
         # either false if message does not need to be changed,
         # or a promise of an array of options to be fed to git.
         my $s=shift;
-        my $prefix= defined ($$s[Maybe_prefix]) ? $$s[Maybe_prefix] : "";
+        my $prefix= $$s[Maybe_prefix] // "";
+        my $postfix= $$s[Maybe_postfix] // "";
         if ($$s[Message]) {
-            Delay { ["-m", $prefix . $$s[Message] ] }
+            Delay { ["-m", $prefix . $$s[Message] . $postfix ] }
               # Delay just for consistency, so that I can Force
               # it. (Should use FP::Lazy instead or so)
         } else {
             if (my ($leader)= $s->perhaps_the_patch_that ("is_message_leader")) {
-                if (length $prefix) {
+                if (length $prefix or length $postfix) {
                     Delay {
                         [ "-m",
-                          $prefix . ($leader->get_orig_message) ]
+                          $prefix . ($leader->get_orig_message) . $postfix ]
                     }
                 } else {
                     $leader->message
                 }
             } else {
                 if (my ($thepatch)= $s->perhaps_singlepatch) {
-                    if (length $prefix) {
+                    if (length $prefix or length $postfix) {
                         Delay {
                             [ "-m",
-                              $prefix . ($thepatch->get_orig_message) ]
+                              $prefix . ($thepatch->get_orig_message) . $postfix ]
                         }
                     } else {
                         if (@{$s->items} == 1) {
@@ -455,6 +457,12 @@ our $listfh= xopen_read $listfile;
 our @clusters;
 my $line=1;
 our $curcluster= new Cluster ($line);
+my $curcluster_add_string = sub {
+    my ($fieldname, $str)= @_;
+    my $old = $curcluster->$fieldname // "";
+    my $setmethod = "set_$fieldname";
+    $curcluster->$setmethod($old.$str);
+};
 
 sub end_cluster {
     push @clusters, $curcluster
@@ -493,7 +501,13 @@ while (<$listfh>) {
     } elsif (/^prefix: ?(.*)/) {
         # not trimming whitespace (other than that single expected space),
         # and not adding ": ". have to do that yourself, ok?
-        $curcluster->set_maybe_prefix ($1);
+        $curcluster_add_string->("maybe_prefix", $1);
+    } elsif (/^postfix: ?(.*)/) {
+        $curcluster_add_string->("maybe_postfix", $1);
+    } elsif (/^postfix-line: ?(.*)/) {
+        $curcluster_add_string->("maybe_postfix", "$1\n");
+    } elsif (/^postfix-para(?:graph)?: ?(.*)/) {
+        $curcluster_add_string->("maybe_postfix", "\n\n$1\n");
     } elsif (/^\[\s*$/) {
         # inline commit message
         my @c;
