@@ -275,6 +275,7 @@ package Cluster {
        'message', # string
        'items', # array_of ClusterItem
        'maybe_prefix', # undef or string to be prepended to commit message
+       'maybe_postfix_subject', # undef or string to be appended to subject line
        'maybe_postfix', # undef or string to be appended to commit message
        '_patches', # cache of items that are patches (premature opt?)
        '_commands', # dito
@@ -397,26 +398,44 @@ package Cluster {
         my $s=shift;
         my $prefix= $$s[Maybe_prefix] // "";
         my $postfix= $$s[Maybe_postfix] // "";
+        my $fix_message = sub {
+            my ($message) = @_;
+            my $subjected_message = do {
+                if (defined (my $str = $$s[Maybe_postfix_subject])) {
+                    my ($subject, @rest) = split /\n/, $message;
+                    join("\n", ($subject.$str, @rest))
+                } else {
+                    $message
+                }
+            };
+            warn "subjected_message= '$subjected_message'";
+            $prefix . $subjected_message . $postfix
+        };
         if ($$s[Message]) {
-            Delay { ["-m", $prefix . $$s[Message] . $postfix ] }
-              # Delay just for consistency, so that I can Force
-              # it. (Should use FP::Lazy instead or so)
+            # Explicit message in `[ ]` was given.
+            # (Delay just for consistency, so that I can Force
+            # it. Should use FP::Lazy instead or so.)
+            Delay {
+                ["-m", $fix_message->($$s[Message]) ]
+            }
         } else {
             if (my ($leader)= $s->perhaps_the_patch_that ("is_message_leader")) {
-                if (length $prefix or length $postfix) {
-                    Delay {
-                        [ "-m",
-                          $prefix . ($leader->get_orig_message) . $postfix ]
-                    }
-                } else {
-                    $leader->message
+                Delay {
+                    [
+                     "-m",
+                     $fix_message->($leader->get_orig_message)
+                    ]
                 }
             } else {
                 if (my ($thepatch)= $s->perhaps_singlepatch) {
-                    if (length $prefix or length $postfix) {
+                    if (length $prefix or length $postfix
+                        or defined($$s[Maybe_postfix_subject]))
+                    {
                         Delay {
-                            [ "-m",
-                              $prefix . ($thepatch->get_orig_message) . $postfix ]
+                            [
+                             "-m",
+                             $fix_message->($thepatch->get_orig_message)
+                            ]
                         }
                     } else {
                         if (@{$s->items} == 1) {
@@ -425,7 +444,12 @@ package Cluster {
                             undef
                         } else {
                             # single patch, but also shell commands
-                            Delay { [ "-m", $thepatch->get_orig_message ] }
+                            Delay {
+                                [
+                                 "-m",
+                                 $fix_message->($thepatch->get_orig_message)
+                                ]
+                            }
                         }
                     }
                 } elsif (not $s->has_patches) {
@@ -502,10 +526,8 @@ while (<$listfh>) {
         # not trimming whitespace (other than that single expected space),
         # and not adding ": ". have to do that yourself, ok?
         $curcluster_add_string->("maybe_prefix", $1);
-    } elsif (/^postfix: ?(.*)/) {
-        $curcluster_add_string->("maybe_postfix", $1);
-    } elsif (/^postfix-line: ?(.*)/) {
-        $curcluster_add_string->("maybe_postfix", "$1\n");
+    } elsif (/^postfix-subject: ?(.*)/) {
+        $curcluster_add_string->("maybe_postfix_subject", $1);
     } elsif (/^postfix-para(?:graph)?: ?(.*)/) {
         $curcluster_add_string->("maybe_postfix", "\n\n$1\n");
     } elsif (/^\[\s*$/) {
