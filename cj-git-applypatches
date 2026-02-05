@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use experimental 'signatures';
 
 use Cwd 'abs_path';
 my ($mydir, $myname);
@@ -56,6 +57,36 @@ GetOptions("verbose"=> \$verbose,
 usage unless @ARGV==1;
 
 our ($listfile)=@ARGV;
+
+our $MAX_LINE_LENGTH = 80;
+
+# Does not end the paragraph with a newline (and strips a newline that
+# was there).
+sub line_wrap($s) {
+    chomp $s;
+    my @all_words = split / /, $s;
+    if (@all_words and $all_words[-1]=~ /^\s*$/) {
+        pop @all_words;
+    }
+    my @lines;
+    while (@all_words) {
+        my $line = "";
+        while (length($line) < $MAX_LINE_LENGTH and @all_words) {
+            my $word = shift @all_words;
+            my $new_len = length($line) + 1 + length($word);
+            if ($new_len > $MAX_LINE_LENGTH) {
+                unshift @all_words, $word;
+                last;
+            }
+            $line .= "$word ";
+        }
+        if (length $line) {
+            chop $line;
+            push @lines, $line;
+        }
+    }
+    join("\n", @lines)
+}
 
 package _Error {
     sub new {
@@ -529,7 +560,8 @@ while (<$listfh>) {
     } elsif (/^postfix-subject: ?(.*)/) {
         $curcluster_add_string->("maybe_postfix_subject", $1);
     } elsif (/^postfix-para(?:graph)?: ?(.*)/) {
-        $curcluster_add_string->("maybe_postfix", "\n\n$1\n");
+        my $line_wrapped = line_wrap($1);
+        $curcluster_add_string->("maybe_postfix", "\n\n$line_wrapped\n");
     } elsif (/^\[\s*$/) {
         # inline commit message
         my @c;
