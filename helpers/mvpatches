@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -eu
+
+usage () {
+    echo "$0 [patchfiles]"
+    echo "  Move the specified files into the current PATCHES directory:"
+    echo "  '$CJ_GIT_PATCHTOOL_BASEDIR'"
+    exit 1
+}
+
+mv -i "$@" "$CJ_GIT_PATCHTOOL_BASEDIR"
