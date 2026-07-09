@@ -25,7 +25,7 @@ Installation can either be done via a tool or manually:
 
 [chjize](https://github.com/pflanze/chjize) is a tool to install
 dependencies that my software uses. Follow the instructions there and
-then run `make cj-git-patchtool`.
+then run `chjize cj-git-patchtool`.
 
 ### Manually
 
